@@ -8,8 +8,10 @@
   <title>WORDRUSH — 7 Vocabulary Games</title>
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./speaking.css">
+  <link rel="stylesheet" href="./community.css">
   <script defer src="./day1-words.js"></script>
   <script defer src="./app.js"></script>
+  <script defer src="./community.js"></script>
 </head>
 <body>
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -26,6 +28,7 @@
         <a href="./speaking.html#mock"><span class="nav-icon">✧</span> Speaking Mock</a>
         <a href="#wordbank"><span class="nav-icon">✳</span> My Words</a>
         <a href="#progress"><span class="nav-icon">⌁</span> Progress</a>
+        <a href="#feedback"><span class="nav-icon">♡</span> Fikr bildirish</a>
       </nav>
       <div class="sidebar-bottom"><span class="live-dot"></span><div><strong>1-Day is ready</strong><small>84 words · 7 games</small></div></div>
       <div class="sidebar-foot">MADE FOR CONSISTENT LEARNERS <span>© 2026</span></div>
@@ -91,6 +94,33 @@
           <form id="wordForm" autocomplete="off"><div class="form-grid"><label>ENGLISH WORD / PHRASE <input id="wordEnglish" required maxlength="100" placeholder="e.g. sustainable"></label><label>O‘ZBEKCHA TARJIMA <input id="wordUzbek" required maxlength="160" placeholder="e.g. barqaror"></label></div><label>SIMPLE DEFINITION <input id="wordDefinition" maxlength="240" placeholder="e.g. Able to continue without causing harm"></label><label>EXAMPLE SENTENCE <textarea id="wordExample" rows="2" maxlength="450" placeholder="e.g. We need sustainable solutions for the future."></textarea></label><button class="btn btn-accent add-submit" type="submit">+ Save word <span>↗</span></button></form>
           <details class="bulk-details"><summary>Have a list? Paste words in bulk <span>＋</span></summary><p>Har bir qator: <code>English | Uzbek | simple definition | example</code></p><textarea id="bulkInput" rows="5" placeholder="make progress | rivojlanmoq | to improve over time | She makes progress every day."></textarea><button type="button" class="btn btn-outline" id="bulkAdd">Import my words ↗</button></details>
         </div><div class="bank-list-panel"><div class="bank-list-top"><h3>My vocabulary</h3><span id="bankListCount">0 items</span></div><div id="wordList" class="word-list"><div class="empty-words"><div class="empty-glyph">Aa</div><h4>Nothing here. Yet.</h4><p>Add your first word to unlock all seven games. Every counter starts at zero.</p></div></div></div></div>
+      </section>
+
+      <section class="wr-feedback-section" id="feedback" aria-label="WORDRUSH fikrlar">
+        <div class="wr-feedback-heading">
+          <div><span class="section-kicker">WORDRUSH / COMMUNITY VOICES</span><h2>Sizning fikringiz. <span>Biz uchun muhim.</span></h2><p>Sayt haqidagi fikr yoki taklifingizni yozing. Fikr muallifining ismi va kiritgan IELTS balli ko‘rinadi.</p></div>
+          <span class="wr-feedback-count" id="wrFeedbackCount">0 TA FIKR</span>
+        </div>
+        <div class="wr-feedback-grid">
+          <div class="wr-feedback-form-panel">
+            <h3>Fikr qoldiring ✦</h3>
+            <p>Qaysi bo‘lim yoqdi? Nimani yaxshilashimiz kerak? Ochiq fikringizni kutamiz.</p>
+            <div class="wr-feedback-identity"><span>◉</span><span id="wrFeedbackIdentity">Profil yuklanmoqda…</span></div>
+            <form id="wrFeedbackForm">
+              <label for="wrFeedbackMessage">FIKRINGIZ</label>
+              <textarea id="wrFeedbackMessage" minlength="10" maxlength="800" required placeholder="WORDRUSH haqida fikrim..."></textarea>
+              <label class="wr-honeypot" for="wrFeedbackWebsite">Website (bo‘sh qoldiring)</label>
+              <input id="wrFeedbackWebsite" class="wr-honeypot" type="text" name="website" tabindex="-1" autocomplete="off">
+              <div class="wr-feedback-form-bottom"><small>10–800 belgi · Ism va ball fikr bilan birga ommaga chiqadi.</small><button type="submit" class="wr-primary">Fikrni yuborish ↗</button></div>
+              <p class="wr-feedback-submit-status" id="wrFeedbackSubmitStatus" role="status"></p>
+            </form>
+          </div>
+          <div class="wr-feedback-list-panel">
+            <div class="wr-feedback-list-top"><h3>So‘nggi fikrlar</h3><button type="button" id="wrFeedbackReload">↻ Yangilash</button></div>
+            <p class="wr-feedback-status" id="wrFeedbackStatus" role="status"></p>
+            <div class="wr-feedback-list" id="wrFeedbackList" aria-live="polite"></div>
+          </div>
+        </div>
       </section>
 
       <footer><span>WORDRUSH <b>✳</b> <small>LEARN. PLAY. REPEAT.</small></span><span>YOUR WORDS. YOUR PACE. YOUR PROGRESS.</span></footer>
