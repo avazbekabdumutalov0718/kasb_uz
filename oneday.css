@@ -93,3 +93,6 @@
 @keyframes od-pulse{50%{box-shadow:0 0 0 7px #ffad8e33}}
 @media(max-width:1100px){.od-vocab-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.od-games{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.od-hero{padding:1.5rem;display:block;margin:1rem 0}.od-hero-art{display:none}.od-topic-tabs{grid-template-columns:1fr;gap:.55rem}.od-vocab-grid{grid-template-columns:1fr}.od-section{padding:1rem}.od-section-title{display:block}.od-games{grid-template-columns:repeat(2,minmax(0,1fr))}.od-game-card{min-height:100px;padding:.9rem}.od-export-panel{grid-template-columns:1fr;padding:1.3rem}.od-hero-stats{gap:.8rem}.od-hero-stats span{font-size:1rem}.od-game-options{grid-template-columns:1fr}.od-game-shell{max-height:95vh}#odGameBody{padding:1rem}}
+
+/* Unified Alisher Speaking daily navigation */
+.od-days{display:flex;flex-wrap:wrap;gap:12px;margin:1.15rem 0 1.5rem}.od-days a{display:block;border:1px solid #47725a;border-radius:14px;padding:14px 20px;color:#d8f7d0;text-decoration:none;background:#152d25;font-weight:800}.od-days a.active{background:#ccff90;color:#142d20;border-color:#ccff90}.od-days a:hover{border-color:#ccff90}.od-export-actions #odZipButton{margin-top:8px}.od-export-actions #odZipStatus{font-size:.82rem;line-height:1.5;overflow-wrap:anywhere}
