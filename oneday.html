@@ -13,6 +13,8 @@
   <script defer src="./oneday-data.js?v=1"></script>
   <script defer src="./oneday.js?v=1"></script>
   <script defer src="./community.js"></script>
+  <script defer src="./lame.min.js"></script>
+  <script defer src="./mock-zip.js?v=2"></script>
 </head>
 <body>
   <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
@@ -24,7 +26,6 @@
         <a href="./index.html#home"><span class="nav-icon">◈</span> Overview</a>
         <a href="./index.html#games"><span class="nav-icon">▦</span> 7 Games</a>
         <a class="active" href="./oneday.html"><span class="nav-icon">✦</span> Alisher’s Speaking</a>
-        <a href="./2day.html"><span class="nav-icon">✦</span> 2-Day Speaking</a>
         <a href="./speaking.html#practice"><span class="nav-icon">🎙</span> Speaking Practice · SOON</a>
         <a href="./speaking.html#day"><span class="nav-icon">◷</span> 30-Day Speaking</a>
         <a href="./speaking.html#mock"><span class="nav-icon">✧</span> Speaking Mock</a>
@@ -41,11 +42,12 @@
         <div class="od-hero-stats"><span>03 <small>TOPICS</small></span><span>45 <small>IBORALAR</small></span><span>07 <small>O‘YINLAR</small></span><span>12 <small>SAVOLLAR</small></span></div></div>
         <div class="od-hero-art" aria-hidden="true"><span>01</span><small>YOUR VOICE<br>YOUR STORY</small></div>
       </section>
+      <nav class="od-days" aria-label="Alisher’s Speaking kunlari"><a class="active" href="./oneday.html">Day 1 · Memory / Jokes / Landscapes</a><a class="" href="./2day.html">Day 2 · Headphones / Singing / Zoos</a></nav>
       <nav class="od-topic-tabs" id="odTopicTabs" aria-label="Alisher’s Speaking topics"></nav>
       <div class="od-topic-content" id="odContent" aria-live="polite"></div>
       <section class="od-export-panel" id="odExport">
         <div><span class="section-kicker">YOUR PERSONAL MOCK FILE</span><h2>All questions. All your answers. <em>One file.</em></h2><p>Bitta offline HTML fayl: 12 ta savol, yozma javoblar va yozib olingan audiolar o‘z ichida bo‘ladi. Internet bo‘lmasa ham kompyuterda ochiladi.</p><p class="od-export-note">Audio faqat shu brauzerda saqlanadi. Muhim yozuvlarni yo‘qotmaslik uchun mock faylni yuklab oling.</p></div>
-        <div class="od-export-actions"><div id="odExportStatus">Hozircha javoblar kiritilmagan.</div><button type="button" class="btn btn-accent" id="odExportButton">📄 Mock faylni tayyorlash</button><div id="odDownloadReady"></div><a class="od-browser-link" href="./oneday.html" target="_blank" rel="noopener">↗ WORDRUSH’ni alohida brauzer oynasida ochish</a><p class="od-download-help"><strong>Kompyuterga yuklash:</strong> ChatGPT ichidagi oynada fayl yuklanmasa, yuqorida WORDRUSH sayti nomi yonidagi <b>↗</b> belgisini bosib Chrome/Edge brauzerida oching. Yoki tayyor Mock faylni yangi oynada ochib, <kbd>Ctrl + S</kbd> ni bosing.</p></div>
+        <div class="od-export-actions"><div id="odExportStatus">Hozircha javoblar kiritilmagan.</div><button type="button" class="btn btn-accent" id="odExportButton">📄 HTML Mock tayyorlash</button><button type="button" class="btn btn-accent" id="odZipButton">📦 ZIP yuklash · MP3 audiolar alohida</button><p id="odZipStatus" role="status">ZIP ichida index.html, savollar va mavjud audiolar MP3 formatida bo‘ladi.</p><div id="odDownloadReady"></div><a class="od-browser-link" href="./oneday.html" target="_blank" rel="noopener">↗ WORDRUSH’ni alohida brauzer oynasida ochish</a><p class="od-download-help"><strong>Kompyuterga yuklash:</strong> ChatGPT ichidagi oynada fayl yuklanmasa, yuqorida WORDRUSH sayti nomi yonidagi <b>↗</b> belgisini bosib Chrome/Edge brauzerida oching. Yoki tayyor Mock faylni yangi oynada ochib, <kbd>Ctrl + S</kbd> ni bosing.</p></div>
       </section>
       <footer><span>WORDRUSH <b>✳</b> <small>ALISHER’S SPEAKING</small></span><span>LEARN. SPEAK. KEEP.</span></footer>
     </main>
