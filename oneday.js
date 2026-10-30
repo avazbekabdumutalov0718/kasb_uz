@@ -121,10 +121,10 @@
   function render(){
     const topic=topics[activeTopic];
     $('#odTopicTabs').innerHTML=topics.map((t,i)=>
-      '<button type="button" class="od-topic-tab '+(i===activeTopic?'active':'')+'" data-action="topic" data-index="'+i+'" aria-pressed="'+(i===activeTopic)+'"><span class="number">'+esc(t.number)+'</span><span><strong>'+esc(t.title)+'</strong><small>'+esc(t.period)+' · 15 ibora · 7 o‘yin · 4 savol</small></span></button>'
+      '<button type="button" class="od-topic-tab '+(i===activeTopic?'active':'')+'" data-action="topic" data-index="'+i+'" aria-pressed="'+(i===activeTopic)+'"><span class="number">'+esc(t.number)+'</span><span><strong>'+esc(t.title)+'</strong><small>'+esc(t.period)+' · '+t.words.length+' ibora · 7 o‘yin · 4 savol</small></span></button>'
     ).join('');
-    let html='<div class="od-summary"><div><span class="section-kicker">TOPIC '+esc(topic.number)+' · '+esc(topic.period)+'</span><h2>'+esc(topic.title)+'</h2><p>'+esc(topic.intro)+'</p></div><div class="od-progress"><strong>'+wordStatus(topic)+' / 15</strong><span>o‘rganilgan iboralar</span><strong>'+topicStatus(topic)+' / 4</strong><span>javob berilgan savollar</span></div></div>';
-    html+='<section class="od-section"><div class="od-section-title"><div><span class="od-step">01 / AVVAL O‘RGANING</span><h3>15 Band 9 vocabulary</h3><p>Har bir iboraning aniq tarjimasi va ma’nosi mavjud. 🔊 bilan talaffuzini tinglang.</p></div></div><div class="od-vocab-grid">'+topic.words.map((w,i)=>
+    let html='<div class="od-summary"><div><span class="section-kicker">TOPIC '+esc(topic.number)+' · '+esc(topic.period)+'</span><h2>'+esc(topic.title)+'</h2><p>'+esc(topic.intro)+'</p></div><div class="od-progress"><strong>'+wordStatus(topic)+' / '+topic.words.length</strong><span>o‘rganilgan iboralar</span><strong>'+topicStatus(topic)+' / 4</strong><span>javob berilgan savollar</span></div></div>';
+    html+='<section class="od-section"><div class="od-section-title"><div><span class="od-step">01 / AVVAL O‘RGANING</span><h3>'+topic.words.length+' Band 9 vocabulary</h3><p>Har bir iboraning aniq tarjimasi va ma’nosi mavjud. 🔊 bilan talaffuzini tinglang.</p></div></div><div class="od-vocab-grid">'+topic.words.map((w,i)=>
       '<article class="od-vocab"><div class="od-vocab-top"><b>'+String(i+1).padStart(2,'0')+'. '+esc(w[0])+'</b><button type="button" data-action="speak" data-phrase="'+esc(w[0])+'" aria-label="Talaffuz: '+esc(w[0])+'">🔊</button></div><small>'+esc(w[1])+'</small><small class="definition">'+esc(w[2])+'</small></article>'
     ).join('')+'</div></section>';
     html+='<section class="od-section"><div class="od-section-title"><div><span class="od-step">02 / 7 XIL USULDA MUSTAHKAMLANG</span><h3>Vocabulary Games</h3><p>Fill the Gap, Word Rush va Sentence Builder uchun alohida, takrorlanmaydigan gaplar ishlatiladi.</p></div></div><div class="od-games">'+modeList.map(([id,name,detail],i)=>
@@ -376,6 +376,21 @@
   window.addEventListener('hashchange',()=>{
     const i=topics.findIndex(t=>t.id===location.hash.slice(1));
     if(i>=0&&i!==activeTopic&&!recorderState){activeTopic=i;render();}
+  });
+
+  // Save questions and real MP3 audio as individual files in a ZIP archive.
+  $('#odZipButton')?.addEventListener('click',async()=>{
+    if(recorderState){toast('Avval audio yozishni to‘xtating.');return;}
+    const button=$('#odZipButton'),status=$('#odZipStatus');button.disabled=true;
+    try{
+      await restored;
+      if(!window.WORDRUSH_ZIP)throw Error('ZIP moduli yuklanmadi. Sahifani qayta oching.');
+      const output=await WORDRUSH_ZIP.build({day:1,topics,recordings,answers:saved.answers,onProgress:message=>status.textContent=message});
+      status.textContent=output.count+' ta audio MP3 shaklida tayyorlandi. Saqlash oynasini tanlang.';
+      await WORDRUSH_ZIP.download(output.blob,'WORDRUSH-Alishers-Speaking-Day-1-MP3.zip');
+      toast('ZIP tayyor: '+output.count+' ta MP3 audio');
+    }catch(error){status.textContent='Eksport xatosi: '+String(error.message||error);toast(status.textContent);}
+    finally{button.disabled=false;}
   });
   render();
 })();
