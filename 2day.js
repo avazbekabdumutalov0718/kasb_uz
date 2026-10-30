@@ -121,10 +121,10 @@
   function render(){
     const topic=topics[activeTopic];
     $('#odTopicTabs').innerHTML=topics.map((t,i)=>
-      '<button type="button" class="od-topic-tab '+(i===activeTopic?'active':'')+'" data-action="topic" data-index="'+i+'" aria-pressed="'+(i===activeTopic)+'"><span class="number">'+esc(t.number)+'</span><span><strong>'+esc(t.title)+'</strong><small>'+esc(t.period)+' · 15 ibora · 7 o‘yin · 4 savol</small></span></button>'
+      '<button type="button" class="od-topic-tab '+(i===activeTopic?'active':'')+'" data-action="topic" data-index="'+i+'" aria-pressed="'+(i===activeTopic)+'"><span class="number">'+esc(t.number)+'</span><span><strong>'+esc(t.title)+'</strong><small>'+esc(t.period)+' · '+t.words.length+' ibora · 7 o‘yin · 4 savol</small></span></button>'
     ).join('');
-    let html='<div class="od-summary"><div><span class="section-kicker">TOPIC '+esc(topic.number)+' · '+esc(topic.period)+'</span><h2>'+esc(topic.title)+'</h2><p>'+esc(topic.intro)+'</p></div><div class="od-progress"><strong>'+wordStatus(topic)+' / 15</strong><span>o‘rganilgan iboralar</span><strong>'+topicStatus(topic)+' / 4</strong><span>javob berilgan savollar</span></div></div>';
-    html+='<section class="od-section"><div class="od-section-title"><div><span class="od-step">01 / AVVAL O‘RGANING</span><h3>15 Band 9 vocabulary</h3><p>Har bir iboraning aniq tarjimasi va ma’nosi mavjud. 🔊 bilan talaffuzini tinglang.</p></div></div><div class="od-vocab-grid">'+topic.words.map((w,i)=>
+    let html='<div class="od-summary"><div><span class="section-kicker">TOPIC '+esc(topic.number)+' · '+esc(topic.period)+'</span><h2>'+esc(topic.title)+'</h2><p>'+esc(topic.intro)+'</p></div><div class="od-progress"><strong>'+wordStatus(topic)+' / '+topic.words.length</strong><span>o‘rganilgan iboralar</span><strong>'+topicStatus(topic)+' / 4</strong><span>javob berilgan savollar</span></div></div>';
+    html+='<section class="od-section"><div class="od-section-title"><div><span class="od-step">01 / AVVAL O‘RGANING</span><h3>'+topic.words.length+' Band 9 vocabulary</h3><p>Har bir iboraning aniq tarjimasi va ma’nosi mavjud. 🔊 bilan talaffuzini tinglang.</p></div></div><div class="od-vocab-grid">'+topic.words.map((w,i)=>
       '<article class="od-vocab"><div class="od-vocab-top"><b>'+String(i+1).padStart(2,'0')+'. '+esc(w[0])+'</b><button type="button" data-action="speak" data-phrase="'+esc(w[0])+'" aria-label="Talaffuz: '+esc(w[0])+'">🔊</button></div><small>'+esc(w[1])+'</small><small class="definition">'+esc(w[2])+'</small></article>'
     ).join('')+'</div></section>';
     html+='<section class="od-section"><div class="od-section-title"><div><span class="od-step">02 / 7 XIL USULDA MUSTAHKAMLANG</span><h3>Vocabulary Games</h3><p>Fill the Gap, Word Rush va Sentence Builder uchun alohida, takrorlanmaydigan gaplar ishlatiladi.</p></div></div><div class="od-games">'+modeList.map(([id,name,detail],i)=>
@@ -196,7 +196,7 @@
         sections.push('<section><h2>'+esc(topic.title)+'</h2>'+questions.join('')+'</section>');
       }
       const now=new Date().toLocaleString('uz-UZ');
-      const documentHtml='<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WORDRUSH — 2-Day Speaking Mock</title><style>body{margin:0;background:#f2f7ed;color:#1b3026;font-family:system-ui,Arial,sans-serif;line-height:1.6}.wrap{max-width:850px;margin:auto;padding:35px 20px}header{background:#143c2c;color:#f2ffe7;padding:35px;border-radius:22px}header h1{font-size:2.25rem;margin:0}header p{color:#c0e0be}h2{border-bottom:3px solid #9bca70;padding-bottom:12px;margin-top:38px}article{background:white;border:1px solid #d5e3cf;padding:22px;margin:15px 0;border-radius:15px}article span{font-size:.75rem;color:#568056;font-weight:800;letter-spacing:.1em}h3{font-size:1.1rem}.answer{white-space:pre-wrap;background:#f0f5eb;padding:15px;border-radius:10px}audio{width:100%;max-width:440px}.empty{color:#808b7d}@media print{audio{display:none}article{break-inside:avoid}}</style></head><body><div class="wrap"><header><h1>WORDRUSH — 2-Day Speaking</h1><p>'+esc(topics.map(t=>t.title).join(' · '))+' | 12 questions | '+esc(now)+'</p><p>Ushbu faylda barcha savollar, yozma javoblar va mavjud audio yozuvlar joylangan. Audio internetga ulanmasdan ijro etiladi.</p></header>'+sections.join('')+'</div></body></html>';
+      const documentHtml='<!doctype html><html lang="uz"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WORDRUSH — Alisher’s Speaking Day 2 Mock</title><style>body{margin:0;background:#f2f7ed;color:#1b3026;font-family:system-ui,Arial,sans-serif;line-height:1.6}.wrap{max-width:850px;margin:auto;padding:35px 20px}header{background:#143c2c;color:#f2ffe7;padding:35px;border-radius:22px}header h1{font-size:2.25rem;margin:0}header p{color:#c0e0be}h2{border-bottom:3px solid #9bca70;padding-bottom:12px;margin-top:38px}article{background:white;border:1px solid #d5e3cf;padding:22px;margin:15px 0;border-radius:15px}article span{font-size:.75rem;color:#568056;font-weight:800;letter-spacing:.1em}h3{font-size:1.1rem}.answer{white-space:pre-wrap;background:#f0f5eb;padding:15px;border-radius:10px}audio{width:100%;max-width:440px}.empty{color:#808b7d}@media print{audio{display:none}article{break-inside:avoid}}</style></head><body><div class="wrap"><header><h1>WORDRUSH — 2-Day Speaking</h1><p>'+esc(topics.map(t=>t.title).join(' · '))+' | 12 questions | '+esc(now)+'</p><p>Ushbu faylda barcha savollar, yozma javoblar va mavjud audio yozuvlar joylangan. Audio internetga ulanmasdan ijro etiladi.</p></header>'+sections.join('')+'</div></body></html>';
       const blob=new Blob([documentHtml],{type:'text/html;charset=utf-8'});
       if(lastExportUrl)URL.revokeObjectURL(lastExportUrl);
       const url=URL.createObjectURL(blob);
@@ -376,6 +376,21 @@
   window.addEventListener('hashchange',()=>{
     const i=topics.findIndex(t=>t.id===location.hash.slice(1));
     if(i>=0&&i!==activeTopic&&!recorderState){activeTopic=i;render();}
+  });
+
+  // Save questions and real MP3 audio as individual files in a ZIP archive.
+  $('#odZipButton')?.addEventListener('click',async()=>{
+    if(recorderState){toast('Avval audio yozishni to‘xtating.');return;}
+    const button=$('#odZipButton'),status=$('#odZipStatus');button.disabled=true;
+    try{
+      await restored;
+      if(!window.WORDRUSH_ZIP)throw Error('ZIP moduli yuklanmadi. Sahifani qayta oching.');
+      const output=await WORDRUSH_ZIP.build({day:2,topics,recordings,answers:saved.answers,onProgress:message=>status.textContent=message});
+      status.textContent=output.count+' ta audio MP3 shaklida tayyorlandi. Saqlash oynasini tanlang.';
+      await WORDRUSH_ZIP.download(output.blob,'WORDRUSH-Alishers-Speaking-Day-2-MP3.zip');
+      toast('ZIP tayyor: '+output.count+' ta MP3 audio');
+    }catch(error){status.textContent='Eksport xatosi: '+String(error.message||error);toast(status.textContent);}
+    finally{button.disabled=false;}
   });
   render();
 })();
