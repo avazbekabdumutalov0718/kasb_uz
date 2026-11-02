@@ -11,7 +11,7 @@ let savedNotes=JSON.parse(localStorage.getItem('wordrush.standalone.notes.v1')||
 const types=['All','Opinion','Discussion','Positive/Negative','Advantages/Disadvantages','Problem/Solution','Two-part'];
 const typeFor=n=>n<=30?'Opinion':n<=43?'Discussion':n<=45?'Positive/Negative':n<=49?'Advantages/Disadvantages':n<=52?'Problem/Solution':'Two-part';
 function flash(m){const e=$('#notice');e.textContent=m;e.hidden=false;clearTimeout(flash.timer);flash.timer=setTimeout(()=>e.hidden=true,2800)}
-function activateNavigation(){const link=document.querySelector('.header nav a[href="'+MODE+'.html"]');if(link)link.classList.add('active')}
+function activateNavigation(){const link=document.querySelector('.workspace-sidebar .side-nav a[href="./'+MODE+'.html"]');if(link){link.classList.add('active');link.setAttribute('aria-current','page')}}
 function setProgress(m){$('#viewer').innerHTML='<section class="content-panel"><p>'+escapeHTML(m)+'</p></section>'}
 function cleanSource(s){return String(s||'').replace(/61 (Articles|Model Essays|Podcasts) for IELTS[^\n]*/g,'').trim()}
 function pageText(p){return escapeHTML(cleanSource(p))}
@@ -166,6 +166,8 @@ document.addEventListener('input',e=>{
 });
 $('#toTop').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
 $('#toBottom').onclick=()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'});
+$('#listTop').onclick=()=>{const e=document.querySelector('.catalog-sidebar');if(e)e.scrollTo({top:0,behavior:'smooth'});};
+$('#listBottom').onclick=()=>{const e=document.querySelector('.catalog-sidebar');if(e)e.scrollTo({top:e.scrollHeight,behavior:'smooth'});};
 async function boot(){
  activateNavigation();setProgress(labels[MODE]+' yuklanmoqda…');
  try{
