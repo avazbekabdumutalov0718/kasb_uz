@@ -1,0 +1,378 @@
+/*
+ WORDRUSH / UNIFIED WHITE THEME — 2026-11-02
+ Applies to Overview, six vocabulary games, Speaking Studio,
+ Alisher's Speaking Days 1-3, Articles, Essays, Podcasts and Topic Vocab.
+ Accessible contrast is intentional: white/near-white surfaces, dark text,
+ evergreen controls. No JS/game logic changes.
+*/
+:root {
+  color-scheme:light;
+  --bg:#ffffff;
+  --panel:#ffffff;
+  --panel2:#f4f9f5;
+  --line:#dbe9de;
+  --ink:#153b29;
+  --muted:#617b69;
+  --lime:#b9f395;
+  --cream:#eff8ee;
+  --shade:0 12px 30px #12452b0c;
+}
+html{color-scheme:light;background:#fff}
+body,body.learning-body,.learning-main{
+  background:#fff!important;
+  color:#153b29!important;
+}
+.ambient{opacity:.12;z-index:0}
+.app-shell,.learning-shell{background:#fff;max-width:none}
+.main,.sp-main,.od-main,.learning-main{background:#fff;color:#153b29}
+.main{position:relative}
+:where(.app-shell,.learning-shell)>.sidebar,
+.learning-shell>.workspace-sidebar{
+  background:#fff!important;
+  color:#214530!important;
+  border-right:1px solid #dce9df!important;
+  box-shadow:3px 0 18px #18432a06;
+}
+.sidebar :is(.brand-name,.brand-name small,.nav-caption){color:#26513a!important}
+.sidebar .brand-name>span{color:#168c58!important}
+.sidebar .brand-mark{
+  background:#d6f8b6!important;color:#153b29!important;
+  box-shadow:0 8px 20px #1a7e4d18;
+}
+.sidebar .side-nav a{color:#496c55!important}
+.sidebar .side-nav a:hover{background:#e9f6ea!important;color:#12613f!important}
+.sidebar .side-nav a.active,
+.learning-shell>.workspace-sidebar .side-nav a.active{
+  color:#115a3b!important;background:#daf2dd!important;
+  box-shadow:inset 3px 0 #16865b;
+}
+.sidebar .nav-count{color:#3b6851;border-color:#ccdfd1}
+.sidebar .sidebar-bottom{
+ background:linear-gradient(125deg,#ecf9eb,#f7fcf6)!important;
+ border-color:#d4e8d6!important;color:#17442e!important;
+}
+.sidebar .sidebar-bottom :is(strong,small){color:#2d6243!important}
+.sidebar .sidebar-foot{color:#6b8572!important}
+.topbar,.learning-topbar{
+ background:#fff!important;
+ border-bottom:1px solid #e0ebe3!important;
+}
+.breadcrumb,.learning-breadcrumb{color:#718e79!important}
+.breadcrumb strong,.learning-breadcrumb strong{color:#155d3f!important}
+.today-label{color:#6a8572!important}
+.profile-pill,.learning-profile .profile-pill,.wr-profile-pill{
+ background:#f2faf2!important;color:#24513b!important;
+ border:1px solid #cfe4d2!important;
+}
+.profile-avatar,.wr-feedback-avatar{
+ background:#d7f7b5!important;color:#18432b!important;
+}
+.wr-profile-band{color:#46785a!important}
+.online-dot,.live-dot{background:#15925e!important}
+:where(h1,h2,h3,h4){color:inherit}
+.section-kicker,.section-heading h2 span,.game-number,.empty-glyph,
+.speaking-entry-count,.sp-day-progress strong,.sp-timer-row>strong,
+.od-game-card .game-number,.od-progress strong,.od-hero-stats span{
+ color:#137b51!important;
+}
+.section-heading>p,.section-heading p,.sp-heading p,
+.sp-heading small,.sp-module-info,.od-section-title p,.od-summary p{
+ color:#5a7764!important;
+}
+footer,.learning-footer{
+ color:#6e8776!important;
+ border-color:#e0ebe3!important;
+}
+footer small{color:#63806d!important}
+.hero{
+ background:linear-gradient(118deg,#f1fbee 0%,#fff 75%)!important;
+ color:#173b28!important;border-color:#d7e7d9!important;
+}
+.hero h1,.hero :is(h2,p){color:#1b4230}
+.hero h1 em{color:#147c54!important}
+.hero-card{
+ background:linear-gradient(145deg,#e7f7e9,#fbfffb)!important;
+ border:1px solid #cde6d2;color:#184a30!important;
+ box-shadow:25px 25px 12px #175d3120,0 14px 28px #16562f10;
+}
+.hero-card>span,.hero-card small{color:#4e8060!important}
+.hero-card .card-rule{background:#b4d8bb!important}
+.orbit,.orbit-outer,.orbit-inner{border-color:#c6e3cb!important}
+.btn-accent,.btn-outline,.btn-ghost,.learn-game,
+.add-submit,.action-button,.empty-game .btn,
+.challenge form button{
+ background:#e2f6d8!important;color:#145538!important;
+ border-color:#b2d9b8!important;
+}
+.btn-accent:hover,.btn-outline:hover,.btn-ghost:hover,
+.learn-game:hover,.add-submit:hover,.action-button:hover{
+ background:#c5ebc1!important;color:#0f5135!important;
+}
+.btn-outline,.btn-ghost{border:1px solid #c6ddc9!important}
+:where(.game-card,.game-card.featured,.new-card,
+.day-deck,.study-side,.empty-game,.speaking-entry-card,
+.sp-panel,.sp-day-progress,.sp-day-focus,
+.sp-mock-start,.sp-mock-summary,.od-section,
+.od-progress,.od-vocab,.od-topic-tab,.od-game-card,
+.od-question,.wr-feedback-form-panel,.wr-feedback-list-panel){
+ background:#fff!important;color:#193e2b!important;
+ border-color:#d5e5d9!important;
+ box-shadow:0 8px 23px #164b2809;
+}
+.game-card.featured,.day-deck,.sp-day-focus,.sp-mock-start,
+.sp-mock-summary,.od-hero{
+ background:linear-gradient(115deg,#edf9ef,#fff)!important;
+}
+.game-card,.game-card.featured,.new-card,
+.speaking-entry-card,.od-game-card{color:#1b412d!important}
+.game-card:hover,.speaking-entry-card:hover,.od-game-card:hover{
+ border-color:#8ac7a0!important;
+ box-shadow:0 10px 30px #23573819;
+}
+.game-card :is(h3,h4,strong,p,small),
+.new-card :is(h3,p,small),
+.sp-panel :is(h2,h3,h4,p),
+.sp-mock-start :is(h2,h3,p),
+.od-section :is(h2,h3,h4,p){
+ color:#244b34;
+}
+.mode-number,.mode-bottom,.stat-top,.day-meter small,
+.day-deck .section-kicker,.day-deck h2 span{
+ color:#4e7e60!important;
+}
+.icon-pink{background:#fff0f6!important;color:#9d4167!important}
+.icon-orange{background:#fff2e5!important;color:#a45d1b!important}
+.icon-teal{background:#e4f7f0!important;color:#196e54!important}
+.accent-stat{background:#d6f2bf!important;color:#204a2d!important}
+.game-icon,.mode-icon{box-shadow:none}
+.play-game,.sp-primary,.od-record,.wr-primary{
+ background:#176e49!important;color:#fff!important;
+ border-color:#176e49!important;
+}
+.play-game:hover,.sp-primary:hover,.od-record:hover,.wr-primary:hover{
+ background:#105737!important;color:#fff!important;
+}
+/* WORDRUSH vocabulary bank and six games */
+:where(.bank-editor,.bank-list,.bulk-details,.word-entry,
+.study-workspace,.study-side,.study-detail,.study-header,
+.study-learned,.challenge,.empty-game){
+ color:#193c2b;
+}
+.bank-editor,.bank-list,.bulk-details,.study-side,.empty-game{
+ background:#f8fbf8!important;border-color:#d7e6d9!important;
+}
+.bank-editor label,.empty-words p,.word-entry p{color:#55725c!important}
+.bank-editor input,.bank-editor textarea,.bulk-details textarea,
+.type-answer,.challenge input,.challenge textarea{
+ background:#fff!important;color:#173b29!important;
+ border-color:#bed9c4!important;
+}
+.bulk-details code{color:#155f3e!important}
+.word-entry{border-color:#e1ece4!important}
+.entry-known,.study-header h1 span,.study-detail strong{color:#167f52!important}
+.day-deck :is(h2,p,strong){color:#1c4a30!important}
+.day-meter-track{background:#dcebdc!important}
+.day-meter-track span{background:#168953!important}
+.study-learned,.study-learned small{color:#3f7152!important}
+.study-flip-card,.study-flip-card.turned{
+ border-color:#bedfbe!important;box-shadow:0 12px 30px #205b3013!important;
+}
+.game-overlay,.od-game-overlay{
+ background:rgba(248,252,249,.97)!important;
+ color:#193b28!important;
+}
+.play-shell,.od-game-shell{background:#fff!important;color:#193b28!important}
+.play-topbar,.od-game-head{border-color:#dcebdc!important}
+.play-brand,.play-brand>b,.od-game-head :is(h2,small){color:#185c3d!important}
+.close-play,.od-close-game{
+ background:#e9f5ec!important;color:#21593b!important;
+ border:1px solid #cee4d0!important;
+}
+.play-head :is(h2,p),.play-head{color:#214631!important}
+.play-progress,.sp-track,.sp-mock-progress{background:#d8e9dd!important}
+.challenge,.od-built{
+ background:#f8fcf7!important;color:#173b29!important;
+ border:1px solid #cfe4d1!important;
+}
+.challenge-label,.od-game-prompt{color:#175c40!important}
+:where(.choice-button,.pair-button,.token-button,
+.answer-token,.od-option,.od-tile,.sp-topic-items button,
+.sp-question-items button,.sp-day-grid button){
+ background:#fff!important;color:#1a4831!important;
+ border-color:#cee3d3!important;
+}
+:where(.choice-button,.pair-button,.token-button,
+.od-option,.sp-topic-items button,.sp-question-items button):hover{
+ background:#eff8f1!important;color:#145436!important;
+}
+.choice-button.correct,.od-option.correct{background:#d6f1dc!important;color:#125535!important}
+.choice-button.wrong,.od-option.wrong{background:#fbe6e2!important;color:#a63e30!important}
+.pair-button.selected,.sp-parts button.active{
+ background:#d9f0dd!important;color:#116744!important;
+ border-color:#8dcfa1!important;
+}
+.feedback.bad{color:#b94233!important}
+.end-score{color:#128151!important}
+.od-game-feedback{color:#596a33!important}
+/* Speaking Studio: banner, navigation and dynamic modules */
+.sp-banner{
+ background:linear-gradient(120deg,#e7f7eb,#fff)!important;
+ color:#1c4530!important;border-color:#d6e8d9!important;
+}
+.sp-banner h1,.sp-banner h1 em{color:#174e35!important}
+.sp-banner p,.sp-heading p{color:#52735c!important}
+.sp-banner:after{opacity:.12!important}
+.sp-banner-mark{
+ background:#d5f4b7!important;color:#1b5537!important;
+ box-shadow:12px 12px 0 #a8d1b044!important;
+}
+.sp-return,.speaking-entry-link{color:#136b45!important}
+.sp-module-tabs,.sp-random-row,
+.sp-parts,.sp-day-stats>div,.sp-mock-step{
+ background:#f5faf6!important;border-color:#d5e7d9!important;
+ color:#183d29!important;
+}
+.sp-module-tabs a{color:#53715c!important}
+.sp-module-tabs a.active{background:#d8f1d8!important;color:#12623e!important}
+.sp-tag{background:#eaf6eb!important;color:#276d48!important}
+.sp-muted,.sp-day-focus>p,.sp-mock-summary p,
+.sp-ideas li,.sp-sample p,.sp-question-items button small{
+ color:#56765e!important;
+}
+.sp-soft,.sp-term button{
+ background:#e8f7eb!important;color:#17593a!important;border-color:#d1e9d4!important;
+}
+.sp-parts button,.sp-question-items button,
+.sp-day-grid button,.sp-topic-items button{
+ color:#264b34!important;background:#fff!important;border-color:#d2e3d5!important;
+}
+.sp-parts button.active,.sp-question-items button.active{
+ background:#e3f6e6!important;color:#115d3c!important;
+}
+.sp-parts strong,.sp-ideas h3,.sp-write h3,.sp-sample h3,
+.sp-day-progress strong,.sp-mock-step span,.sp-mock-steps span.active{
+ color:#126543!important;
+}
+.sp-ideas,.sp-sample,.sp-task,.sp-phrase,
+.sp-history>button,.sp-rubric label{
+ background:#f2f9f3!important;color:#183c28!important;
+ border-color:#d1e7d5!important;
+}
+.sp-ideas li,.sp-ideas p,.sp-sample p,.sp-task p,
+.sp-phrase p,.sp-term small{color:#396d4e!important}
+.sp-input-label input,.sp-write textarea,.sp-mock-answer textarea,
+.sp-day-notes textarea{
+ background:#fff!important;color:#193b2b!important;
+ border:1px solid #badac2!important;
+}
+.sp-track>span,.sp-mock-progress>span{background:#1e9b63!important}
+.sp-day-grid button.completed{
+ background:#e3f8e5!important;border-color:#99d6a7!important;
+}
+.sp-day-focus,.sp-mock-summary{color:#1d4631!important}
+.sp-mock-steps span{color:#41654c!important}
+.sp-mock-steps span.active{background:#e1f6e4!important}
+.sp-rubric :is(input,select){background:#fff;color:#173f2d}
+/* Alisher's Speaking — all 3 days including vocab, microphone & games */
+.od-hero{
+ background:linear-gradient(110deg,#e6f8e9,#fff)!important;
+ color:#19412d!important;border-color:#d4e8d8!important;
+}
+.od-hero h1,.od-hero h1 em{color:#145f40!important}
+.od-hero p,.od-hero-stats small,.od-hero-art small{color:#52735d!important}
+.od-hero-art{background:#ecf9ec!important;border-color:#cce3cf!important}
+.od-hero-art span{color:#16935c!important}
+.od-topic-tab,.od-days a{background:#fff!important;color:#234f36!important;border-color:#d1e4d5!important}
+.od-topic-tab:hover,.od-topic-tab.active,
+.od-days a.active{background:#e4f6e6!important;color:#126540!important;border-color:#8cc6a2!important}
+.od-topic-tab small,.od-progress span,.od-vocab small,.od-game-card small{
+ color:#52725a!important;
+}
+.od-progress,.od-vocab,.od-question,.od-section,
+.od-mic-setup,.od-question details,.od-game-card,
+.od-built{
+ background:#fff!important;color:#173b29!important;border-color:#d2e7d6!important;
+}
+.od-section-title h3,.od-summary h2{color:#174d34!important}
+.od-question :is(h3,h4,p),.od-question details p,
+.od-mic-setup p{color:#355a40!important}
+.od-question details{background:#f6fbf6!important}
+.od-question textarea,.od-game-input{
+ background:#fff!important;color:#1a4530!important;
+ border-color:#bfdcc6!important;
+}
+.od-vocab button,.od-audio-slot a{
+ background:#ecf7ed!important;color:#145e3d!important;
+ border-color:#cae4cd!important;
+}
+.od-record.recording{background:#d94b37!important;color:white!important}
+.od-game-shell{border-color:#d2e6d8!important;box-shadow:0 26px 65px #1742251a!important}
+.od-game-head small{color:#446c50!important}
+.od-game-card .game-number{color:#19734d!important}
+/* Identity form and feedback: white background throughout */
+.wr-entry-overlay{
+ background:rgba(246,251,247,.98)!important;
+ backdrop-filter:blur(12px);
+}
+.wr-entry-card{
+ background:#fff!important;color:#1e4732!important;
+ border:1px solid #cfe5d3!important;
+ box-shadow:0 20px 60px #15512c1e!important;
+}
+.wr-entry-card :is(h2,p,label),.wr-entry-top{color:#264c35!important}
+.wr-entry-card h2 span{color:#167c4c!important}
+#wrProfileForm label span,#wrProfileForm .wr-entry-privacy{color:#6a8973!important}
+#wrProfileForm input,#wrProfileForm select,.wr-feedback-form-panel textarea{
+ background:#fff!important;color:#17402d!important;
+ border-color:#bbd9c2!important;color-scheme:light!important;
+}
+.wr-secondary{background:#eaf6e9!important;color:#20603e!important;border-color:#c2dfc7!important}
+.wr-primary{background:#197a4b!important;color:#fff!important}
+.wr-feedback-form-panel,.wr-feedback-list-panel,.wr-feedback-card{
+ background:#fff!important;color:#19422d!important;
+ border-color:#d6e8d9!important;
+}
+.wr-feedback-heading :is(h2,p),.wr-feedback-author strong,
+.wr-feedback-form-panel label,.wr-feedback-card :is(p,strong){
+ color:#214a34!important;
+}
+.wr-feedback-identity{
+ background:#eaf8ed!important;color:#205a3a!important;border-color:#d1e5d4!important;
+}
+.wr-feedback-list-top button{color:#176c47!important}
+.wr-feedback-count{color:#176c47!important;border-color:#c2dcc7!important}
+.wr-feedback-date,.wr-feedback-empty{color:#587b65!important}
+.wr-form-status{color:#b33c35!important}
+/* Dedicated articles and other learning pages use the same white shell */
+body.learning-body .learning-main{background:#fff!important}
+body.learning-body .learning-topbar{background:#fff!important}
+body.learning-body .learning-main .hero{background:#f1fbf3!important}
+body.learning-body .learning-main :is(.catalog-sidebar,.reader,.content-panel){
+ background:#fff!important;color:#1b402f!important;
+}
+body.learning-body .learning-main :is(.catalog-sidebar,.reader,.content-panel){
+ border-color:#dce9df!important;
+}
+body.learning-body .learning-shell>.workspace-sidebar{background:#fff!important}
+body.learning-body .learning-shell>.workspace-sidebar .brand-name,
+body.learning-body .learning-shell>.workspace-sidebar .side-nav a{
+ color:#284d37!important;
+}
+body.learning-body .learning-shell>.workspace-sidebar .side-nav a.active{
+ background:#dcf4e1!important;color:#105a37!important;
+}
+body.learning-body .learning-main .float button{background:#19784b!important;color:#fff!important}
+/* Screen sizes and keyboard focus */
+:where(button,a,input,select,textarea):focus-visible{
+ outline:3px solid #16875c!important;outline-offset:3px;
+}
+::selection{background:#c6ebca;color:#16482d}
+@media (max-width:1000px){
+ .app-shell>.sidebar,.learning-shell>.workspace-sidebar{
+  background:#fff!important;border-bottom:1px solid #d8e7db!important;
+ }
+}
+@media print{
+ body,.main,.learning-main,.reader,.content-panel{background:#fff!important;color:#111!important}
+ .sidebar,.workspace-sidebar,.game-overlay,.od-game-overlay{display:none!important}
+}
