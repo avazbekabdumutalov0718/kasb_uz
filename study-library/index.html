@@ -26,7 +26,7 @@ function articleUnits(){
   const id=+m[1];if(id<1||id>61)continue;
   if(!map.has(id)){
    const lines=page.text.split('\\n').map(x=>x.trim()).filter(Boolean);
-   const re=new RegExp('^0?'+id+'\\\\s+');
+   const re=new RegExp('^0?'+id+'\\s+');
    const title=(lines.find(x=>re.test(x)&&!/ARTICLE/i.test(x))||'Article '+id).replace(re,'').replace(/\\bREADING\\b.*$/i,'').trim();
    map.set(id,{id,title,pages:[],source:'articles'});
   }
@@ -41,7 +41,7 @@ function otherUnits(key){
   const lines=(p?.text||'').split('\\n').map(x=>x.trim()).filter(Boolean);
   const number=String(n).padStart(2,'0');
   const found=key==='essays'?lines.find(x=>x.startsWith(number+' ')):lines.find(x=>x.endsWith(number)&&!x.startsWith('UNIT'));
-  return {id:n,title:(found||key+' '+n).replace(new RegExp('^'+number+'\\\\s*'),'').replace(new RegExp(number+'$'),'').trim(),pages:ids,source:key};
+  return {id:n,title:(found||key+' '+n).replace(new RegExp('^'+number+'\\s*'),'').replace(new RegExp(number+'$'),'').trim(),pages:ids,source:key};
  });
 }
 async function loadCategory(key){
@@ -61,7 +61,7 @@ async function loadCategory(key){
  if(key==='articles')articleUnits();
  if(key==='essays'||key==='podcasts')otherUnits(key);
  loaded[key]=missing.length===0;
- if(category!==key||version!==loadToken)return;
+ if(category!==key)return;
  if(missing.length){
   $('#viewer').innerHTML='<h2>Materiallarni yuklashda xato</h2><p>'+missing.map(i=>'Part '+i).join(', ')+' yuklanmadi.</p><button class="btn" id="retryLibrary">↻ Retry</button>';
   $('#items').innerHTML='<p class="sub">Some files failed to load.</p>';
