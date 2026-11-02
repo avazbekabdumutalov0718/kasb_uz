@@ -12,7 +12,6 @@
     ['flash','Flashcards','Ibora, tarjima va ta’rifni eslab qolish'],
     ['choice','Multiple Choice','To‘rtta ma’nodan to‘g‘risini tanlash'],
     ['match','Matching Pairs','Inglizcha iborani o‘zbekchasi bilan bog‘lash'],
-    ['gap','Fill the Gap','Faqat shu o‘yinga xos gapdagi bo‘shliq'],
     ['rush','Word Rush','60 soniyada yangi kontekstlarni topish'],
     ['typing','Typing Race','Tarjimadan inglizcha iborani yozish'],
     ['builder','Sentence Builder','Boshqa gapning so‘zlarini tartiblash']
@@ -121,13 +120,13 @@
   function render(){
     const topic=topics[activeTopic];
     $('#odTopicTabs').innerHTML=topics.map((t,i)=>
-      '<button type="button" class="od-topic-tab '+(i===activeTopic?'active':'')+'" data-action="topic" data-index="'+i+'" aria-pressed="'+(i===activeTopic)+'"><span class="number">'+esc(t.number)+'</span><span><strong>'+esc(t.title)+'</strong><small>'+esc(t.period)+' · '+t.words.length+' ibora · 7 o‘yin · 4 savol</small></span></button>'
+      '<button type="button" class="od-topic-tab '+(i===activeTopic?'active':'')+'" data-action="topic" data-index="'+i+'" aria-pressed="'+(i===activeTopic)+'"><span class="number">'+esc(t.number)+'</span><span><strong>'+esc(t.title)+'</strong><small>'+esc(t.period)+' · '+t.words.length+' ibora · 6 o‘yin · 4 savol</small></span></button>'
     ).join('');
     let html='<div class="od-summary"><div><span class="section-kicker">TOPIC '+esc(topic.number)+' · '+esc(topic.period)+'</span><h2>'+esc(topic.title)+'</h2><p>'+esc(topic.intro)+'</p></div><div class="od-progress"><strong>'+wordStatus(topic)+' / '+topic.words.length+'</strong><span>o‘rganilgan iboralar</span><strong>'+topicStatus(topic)+' / 4</strong><span>javob berilgan savollar</span></div></div>';
     html+='<section class="od-section"><div class="od-section-title"><div><span class="od-step">01 / AVVAL O‘RGANING</span><h3>'+topic.words.length+' Band 9 vocabulary</h3><p>Har bir iboraning aniq tarjimasi va ma’nosi mavjud. 🔊 bilan talaffuzini tinglang.</p></div></div><div class="od-vocab-grid">'+topic.words.map((w,i)=>
       '<article class="od-vocab"><div class="od-vocab-top"><b>'+String(i+1).padStart(2,'0')+'. '+esc(w[0])+'</b><button type="button" data-action="speak" data-phrase="'+esc(w[0])+'" aria-label="Talaffuz: '+esc(w[0])+'">🔊</button></div><small>'+esc(w[1])+'</small><small class="definition">'+esc(w[2])+'</small></article>'
     ).join('')+'</div></section>';
-    html+='<section class="od-section"><div class="od-section-title"><div><span class="od-step">02 / 7 XIL USULDA MUSTAHKAMLANG</span><h3>Vocabulary Games</h3><p>Fill the Gap, Word Rush va Sentence Builder uchun alohida, takrorlanmaydigan gaplar ishlatiladi.</p></div></div><div class="od-games">'+modeList.map(([id,name,detail],i)=>
+    html+='<section class="od-section"><div class="od-section-title"><div><span class="od-step">02 / 6 XIL USULDA MUSTAHKAMLANG</span><h3>Vocabulary Games</h3><p>Word Rush va Sentence Builder uchun alohida, takrorlanmaydigan gaplar ishlatiladi.</p></div></div><div class="od-games">'+modeList.map(([id,name,detail],i)=>
       '<button type="button" class="od-game-card" data-action="game" data-mode="'+id+'"><span class="game-number">0'+(i+1)+' / GAME</span><strong>'+esc(name)+'</strong><small>'+esc(detail)+'</small></button>'
     ).join('')+'</div></section>';
     html+='<section class="od-section" id="odQuestions"><div class="od-section-title"><div><span class="od-step">03 / ENDI O‘ZINGIZ JAVOB BERING</span><h3>'+esc(topic.title)+' — Speaking Questions</h3><p>Har bir savol uchun yozma javob va alohida mikrofon yozuvi saqlanadi. Audio mikrofonga ruxsat berganingizda yoziladi.</p></div><span class="od-step">4 QUESTIONS</span></div><div class="od-mic-setup"><div><strong>🎙 Mikrofon ruxsati</strong><p id="odMicMessage" role="status">'+esc(microphoneFrameAllowed()===false?micMessage():micStatus)+'</p></div><button type="button" data-action="mic-check">Mikrofonga ruxsat so‘rash</button></div><div class="od-question-grid">'+topic.questions.map(([question,sample],index)=>{
@@ -214,6 +213,7 @@
   // Each game uses one of three distinct authored practice sentences rather
   // than copying the PDF’s examples or another game’s sentences.
   function startGame(mode){
+    if(!modeList.some(([id])=>id===mode))return;
     if(recorderState){toast('Avval audio yozishni tugating.');return;}
     stopRush();
     const topic=topics[activeTopic];
@@ -248,8 +248,8 @@
       if(game.reveal)html+='<div class="od-game-options"><button type="button" class="od-option" data-game-action="mark" data-known="0">Yana mashq qilaman</button><button type="button" class="od-option" data-game-action="mark" data-known="1">✓ Eslab qoldim</button></div>';
     }else if(mode==='choice'){
       html+='<p class="od-game-prompt">'+esc(w[0])+'</p><div class="od-game-options">'+optionsFor(idx,1).map(s=>'<button class="od-option" type="button" data-game-action="choose" data-value="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div>';
-    }else if(mode==='gap'||mode==='typing'){
-      html+='<p class="od-game-prompt">'+(mode==='gap'?gapText(w[3]):esc(w[1]))+'</p>';
+    }else if(mode==='typing'){
+      html+='<p class="od-game-prompt">'+esc(w[1])+'</p>';
       html+='<form id="odGameForm"><input class="od-game-input" name="entry" aria-label="Inglizcha iborani kiriting" autocomplete="off" placeholder="English word or phrase…" required><button class="od-game-primary" type="submit">Tekshirish ✓</button></form>';
     }else if(mode==='rush'){
       html+='<p class="od-game-prompt">'+gapText(w[5])+'</p><div class="od-game-options">'+optionsFor(idx,0).map(s=>'<button class="od-option" type="button" data-game-action="choose" data-value="'+esc(s)+'">'+esc(s)+'</button>').join('')+'</div>';
@@ -269,7 +269,7 @@
     if(game.feedback)html+='<p class="od-game-feedback" role="status">'+esc(game.feedback)+'</p>';
     if(game.locked&&mode!=='match')html+='<button type="button" data-game-action="next" class="od-game-primary">'+(game.index===total-1?'Natijani ko‘rish ↗':'Keyingi savol →')+'</button>';
     $('#odGameBody').innerHTML=html;
-    if(!game.locked&&['gap','typing'].includes(mode))$('#odGameForm input')?.focus();
+    if(!game.locked&&mode==='typing')$('#odGameForm input')?.focus();
   }
   function markResult(correct){
     if(!game||game.locked)return;
