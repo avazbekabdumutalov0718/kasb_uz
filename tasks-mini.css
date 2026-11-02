@@ -1,0 +1,88 @@
+/* WORDRUSH Telegram Mini App — Homework Tracker inspired layout.
+   Only active inside Telegram Mini App (?miniapp=1). Website retains white theme. */
+#miniDashboard{display:none}
+body.mini-mode{background:#f5f5f5!important;color:#151515!important;font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+body.mini-mode .app-shell{display:block;min-height:100dvh;background:#f5f5f5!important}
+body.mini-mode .sidebar,
+body.mini-mode .tasks-topbar,
+body.mini-mode .tasks-hero,
+body.mini-mode .dashboard,
+body.mini-mode .progress-panel,
+body.mini-mode .section-top,
+body.mini-mode .tasks-bottom,
+body.mini-mode .task-footer,
+body.mini-mode .quick-scroll{display:none!important}
+body.mini-mode .tasks-main{background:#f5f5f5!important;width:100%;min-height:100dvh}
+body.mini-mode .tasks-content{padding:12px 16px 45px!important;max-width:560px;margin:0 auto;background:#f5f5f5!important}
+body.mini-mode #miniDashboard{display:block}
+body.mini-mode .mini-score-card{position:relative;overflow:hidden;border-radius:32px;background:#141414;color:#fff;padding:29px 25px 26px;box-shadow:0 3px 0 #1414140c}
+body.mini-mode .mini-score-card::before{content:"";position:absolute;background:#382318;width:190px;height:190px;border-radius:50%;right:-65px;top:-82px;pointer-events:none}
+body.mini-mode .mini-welcome{font-size:17px;font-weight:500;color:#fff;position:relative}
+body.mini-mode .mini-person{font-size:clamp(21px,6.2vw,30px);letter-spacing:-.65px;line-height:1.2;font-weight:900;margin:9px 0 15px;position:relative;overflow-wrap:anywhere}
+body.mini-mode .mini-tag{background:#fa7830;color:#fff;font-size:14px;font-weight:800;border-radius:999px;padding:7px 15px;display:inline-flex;align-items:center;position:relative}
+body.mini-mode .mini-stat-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:15px;position:relative}
+body.mini-mode .mini-stat-row .mini-big{font-size:50px;line-height:1.1;font-weight:950;letter-spacing:-2px;color:#fff}
+body.mini-mode .mini-stat-row .mini-of{font-size:20px;color:#b4b4b4;font-weight:500}
+body.mini-mode .mini-stat-row .mini-total{font-size:15px;color:#dedede;white-space:nowrap}
+body.mini-mode .mini-score-track{height:9px;border-radius:30px;background:#393939;margin:16px 0 21px;overflow:hidden;position:relative}
+body.mini-mode .mini-score-track span{display:block;height:100%;width:0;background:#ff782e;border-radius:30px;transition:width .3s}
+body.mini-mode .mini-metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative}
+body.mini-mode .mini-metric{border-radius:19px;background:#252525;padding:16px 17px;min-height:92px}
+body.mini-mode .mini-metric>span{display:block;font-size:14px;color:#bbb;margin-bottom:5px}
+body.mini-mode .mini-metric strong{display:block;font-size:22px;font-weight:900;color:#fff;line-height:1.2}
+body.mini-mode .mini-metric strong small{font-size:13px;color:#989898;font-weight:500}
+body.mini-mode .mini-section-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;border:1px solid #e5e5e5;background:#fff;border-radius:24px;padding:6px;margin:20px 0 24px}
+body.mini-mode .mini-section-tabs button{height:57px;border:0;border-radius:17px;background:transparent;color:#939393!important;font-weight:850;font-size:17px;cursor:pointer}
+body.mini-mode .mini-section-tabs button.selected{background:#151515!important;color:#fff!important}
+body.mini-mode .mini-days{display:flex;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;padding:2px 0 15px}
+body.mini-mode .mini-days::-webkit-scrollbar{display:none}
+body.mini-mode .mini-day{display:flex;flex-direction:column;gap:4px;flex:0 0 83px;min-height:71px;align-items:center;justify-content:center;white-space:nowrap;background:#fff!important;border:1.5px solid #ff7737!important;border-radius:17px;color:#161616!important;padding:8px 4px}
+body.mini-mode .mini-day.selected{background:#151515!important;border-color:#151515!important;color:#fff!important}
+body.mini-mode .mini-day strong{font-size:16px;font-weight:900;color:inherit}
+body.mini-mode .mini-day small{font-size:11px;color:#a38e88;font-weight:600}
+body.mini-mode .mini-day.selected small{color:#e6e6e6}
+body.mini-mode .mini-day .mini-day-check{color:#fd7330}
+body.mini-mode .mini-dayheading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:9px 2px 18px}
+body.mini-mode .mini-dayheading h2{margin:0;font-size:26px;font-weight:950;color:#111;letter-spacing:-.6px}
+body.mini-mode .mini-dayheading span{font-size:13px;color:#999;white-space:nowrap}
+body.mini-mode .notice-line{border-radius:15px;background:#fffaf4!important;border:1px solid #f5d7c2!important;margin:10px 0 15px;color:#8c4e2e!important;padding:12px;font-size:11px}
+body.mini-mode .notice-line b{color:#963c16}
+body.mini-mode .category{background:#fff;border:1px solid #ededed;border-radius:26px;margin:13px 0;overflow:hidden;box-shadow:0 1px 3px #00000005}
+body.mini-mode .category-head{background:#fff;border-bottom:1px solid #f1f1f1;padding:18px 18px 12px;gap:8px}
+body.mini-mode .category-icon{display:none}
+body.mini-mode .category-head .mini-label{display:none}
+body.mini-mode .category-head h3{font-size:15px;color:#f46d2c!important;font-weight:900;letter-spacing:1px;margin:0}
+body.mini-mode .category-count{margin-left:auto;color:#e87936!important;background:#fff3eb!important;border-color:#ffd9c4!important;font-size:10px}
+body.mini-mode .task-list{padding:0 17px}
+body.mini-mode .task-card{padding:17px 0;border-bottom:1px solid #f1f1f1}
+body.mini-mode .task-check{border-color:#dedede;border-radius:50%;height:26px;width:26px;flex-basis:26px}
+body.mini-mode .task-check.checked{background:#f97930!important;border-color:#f97930!important}
+body.mini-mode .task-title{font-size:14px;font-weight:800;color:#242424!important}
+body.mini-mode .task-card.completed .task-title{color:#999!important}
+body.mini-mode .task-meta{font-size:10px;color:#888}
+body.mini-mode .task-meta strong{color:#cc6a35}
+body.mini-mode .task-status{background:#fff3ed!important;color:#ef7332!important;font-size:9px;padding:5px 6px}
+body.mini-mode .task-status.good{background:#eaf8ed!important;color:#258157!important}
+body.mini-mode .task-bottom{margin:12px 0 9px 0;gap:10px}
+body.mini-mode .timer-button{background:#f8f8f8!important;border-color:#e5e5e5!important;color:#444!important}
+body.mini-mode .timer-button.running{color:#e66b31!important;border-color:#ffcaad!important}
+body.mini-mode .timer-face{color:#222}
+body.mini-mode .upload-label{background:#ff762d!important;color:#fff!important;padding:9px 12px}
+body.mini-mode .proof-count,.mini-mode .missing-proof{color:#969696}
+body.mini-mode .proofs{margin-left:0}
+body.mini-mode .proof-chip{background:#f8f8f8!important;border-color:#e7e7e7!important;color:#333!important}
+body.mini-mode .proof-chip button{color:#de7035!important}
+body.mini-mode .mini-ranking{border-radius:22px;padding:26px 20px;background:#fff;border:1px solid #ebebeb;margin:12px 0;color:#222}
+body.mini-mode .mini-ranking h3{font-size:23px;margin:0 0 10px}
+body.mini-mode .mini-ranking p{font-size:13px;color:#707070}
+body.mini-mode .mini-ranking .mini-rank-placeholder{background:#f7f7f7;border:1px dashed #dadada;border-radius:14px;padding:20px;text-align:center;margin:16px 0;color:#878787}
+body.mini-mode #toast{max-width:90vw;left:50%;bottom:24px;border-radius:15px;background:#191919}
+@media(max-width:380px){
+ body.mini-mode .tasks-content{padding:9px 10px 35px!important}
+ body.mini-mode .mini-score-card{padding:22px 18px}
+ body.mini-mode .mini-person{font-size:23px}
+ body.mini-mode .mini-day{flex-basis:77px}
+ body.mini-mode .mini-metric{padding:13px}
+ body.mini-mode .task-row{gap:8px}
+ body.mini-mode .task-list{padding:0 12px}
+}

@@ -36,7 +36,7 @@ async function onUpdate(update) {
   const text = String(msg.text || '').trim().split(/\s+/)[0]?.split('@')[0]?.toLowerCase();
   if (text === '/sayt') return send(msg.chat.id,'🌐 WORDRUSH rasmiy sayt:\n'+website);
   if (text === '/start' || text === '/tasks') {
-    return send(msg.chat.id,'WORDRUSH TASKS ☑\nQuyidagi tugma orqali faqat TASKS Mini App ochiladi.',tasksButton());
+    return send(msg.chat.id,'🏠 Homework Tracker\n☑ TASKS bo‘limini ochish uchun pastdagi tugmani bosing.',tasksButton());
   }
 }
 async function setupWebhook() {
