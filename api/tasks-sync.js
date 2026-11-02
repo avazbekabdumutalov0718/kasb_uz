@@ -20,6 +20,18 @@ import { randomUUID } from 'node:crypto';
 
 export const config = { maxDuration: 30 };
 
+/* Telegram bot tokeni (fayl yuklash uchun kerak).
+   Sizdagi env nomi boshqacha bo'lsa, shu yerda o'zgartiring. */
+const BOT_TOKEN =
+  process.env.TELEGRAM_BOT_TOKEN ||
+  process.env.BOT_TOKEN ||
+  process.env.TG_BOT_TOKEN ||
+  '';
+
+/* Kurs 1-kuni qaysi sana ekanini shu yerda belgilang (YYYY-MM-DD).
+   Hozir: 2026-11-02 = 7-kun bo'ladigan qilib qo'yilgan. */
+const COURSE_START = process.env.COURSE_START || '2026-10-27';
+
 export async function GET(req) {
   const uid = user(req);
 
@@ -92,7 +104,6 @@ export async function POST(req) {
     await publishScore(uid, day);
 
     // Faqat holat o'zgarganda kanalga qayta yuboramiz
-    // (taymer/duration saqlashlarida kanalni bezovta qilmaymiz)
     if (doneChanged) await notify(uid, day);
 
     return response({ item: current });
@@ -172,10 +183,13 @@ export async function POST(req) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  KANALGA YUBORISH: eski xabarlarni o'chirib, yangisini yuboradi     */
+/*  KANALGA YUBORISH                                                   */
+/*  Eski xabarlar o'chadi -> yangi bitta tartibli xabar + HAQIQIY fayl */
 /* ------------------------------------------------------------------ */
 
 const CAPTION_LIMIT = 1024;
+const MAX_PHOTO = 10 * 1024 * 1024; // Telegram: rasm 10 MB gacha
+const MAX_FILE = 50 * 1024 * 1024; // Telegram: bot fayli 50 MB gacha
 
 const esc = s =>
   String(s ?? '')
@@ -183,10 +197,49 @@ const esc = s =>
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 
-function buildSummary(data, day, name, proofsByTask) {
+function dayNumber(day) {
+  const n = Math.floor(
+    (Date.parse(day) - Date.parse(COURSE_START)) / 86400000
+  ) + 1;
+
+  return n > 0 ? n : 1;
+}
+
+async function whoIs(uid, cfg) {
+  let name =
+    cfg?.name ||
+    [cfg?.firstName, cfg?.lastName].filter(Boolean).join(' ') ||
+    '';
+  let username = cfg?.username || '';
+
+  if (!name || !username) {
+    try {
+      const c = await tg('getChat', { chat_id: uid });
+
+      name ||= [c.first_name, c.last_name].filter(Boolean).join(' ');
+      username ||= c.username || '';
+    } catch (e) {
+      console.error('getChat failed', e.message);
+    }
+  }
+
+  return { name, username: String(username).replace(/^@/, '') };
+}
+
+function buildSummary(data, day, who, proofsByTask, failed) {
   const done = Object.values(data).filter(
     x => x.done && x.proofs?.length
   ).length;
+
+  const head = [];
+
+  const person = [];
+  if (who.name) person.push('<b>' + esc(who.name) + '</b>');
+  if (who.username) person.push('@' + esc(who.username));
+  if (person.length) head.push('👤 ' + person.join(' · '));
+
+  head.push('📅 ' + day);
+  head.push('📊 <b>' + dayNumber(day) + '-kun: ' + done + '/21 ball</b>');
 
   const blocks = Object.entries(titles).map(([id, t]) => {
     const ok = data[id]?.done && data[id]?.proofs?.length;
@@ -199,22 +252,72 @@ function buildSummary(data, day, name, proofsByTask) {
     return block;
   });
 
-  return (
-    (name ? '👤 <b>' + esc(name) + '</b>\n' : '') +
-    '📅 ' + day + '\n' +
-    '📊 <b>' + done + '/21 ball</b>\n\n' +
-    blocks.join('\n\n')
-  );
+  let text = head.join('\n') + '\n\n' + blocks.join('\n\n');
+
+  if (failed.length) {
+    text +=
+      '\n\n⚠️ Yuborilmadi: ' + failed.map(esc).join(', ');
+  }
+
+  return text;
 }
 
+/* Faylni serverga yuklab olamiz (Telegram havola orqali .html olmaydi) */
+async function download(url) {
+  const r = await fetch(url);
+
+  if (!r.ok) throw new Error('Download failed: ' + r.status);
+
+  return Buffer.from(await r.arrayBuffer());
+}
+
+/* Telegramga multipart (haqiqiy fayl) yuklash */
+async function tgUpload(method, fields, files) {
+  if (!BOT_TOKEN) throw new Error('BOT_TOKEN topilmadi');
+
+  const form = new FormData();
+
+  for (const [k, v] of Object.entries(fields)) {
+    form.append(k, typeof v === 'string' ? v : JSON.stringify(v));
+  }
+
+  for (const f of files) {
+    form.append(
+      f.field,
+      new Blob([f.buffer], {
+        type: f.type || 'application/octet-stream'
+      }),
+      f.filename
+    );
+  }
+
+  const r = await fetch(
+    'https://api.telegram.org/bot' + BOT_TOKEN + '/' + method,
+    { method: 'POST', body: form }
+  );
+
+  const j = await r.json();
+
+  if (!j.ok) throw new Error(j.description || 'Telegram error');
+
+  return j.result;
+}
+
+/* items: [{ buffer, name, type }]; kind: 'photo' | 'document' */
 async function sendGroup(channelId, kind, items, caption, ids) {
-  // Bitta fayl bo'lsa alohida, ko'p bo'lsa albom (10 tadan)
+  const capFields = caption
+    ? { caption, parse_mode: 'HTML' }
+    : {};
+
   if (items.length === 1) {
-    const m = await tg(kind === 'photo' ? 'sendPhoto' : 'sendDocument', {
-      chat_id: channelId,
-      [kind]: items[0].url,
-      ...(caption ? { caption, parse_mode: 'HTML' } : {})
-    });
+    const it = items[0];
+
+    const m = await tgUpload(
+      kind === 'photo' ? 'sendPhoto' : 'sendDocument',
+      { chat_id: String(channelId), ...capFields },
+      [{ field: kind, buffer: it.buffer, filename: it.name, type: it.type }]
+    );
+
     ids.push(m.message_id);
     return;
   }
@@ -223,24 +326,35 @@ async function sendGroup(channelId, kind, items, caption, ids) {
     const chunk = items.slice(i, i + 10);
 
     if (chunk.length === 1) {
-      const m = await tg(kind === 'photo' ? 'sendPhoto' : 'sendDocument', {
-        chat_id: channelId,
-        [kind]: chunk[0].url
-      });
+      const it = chunk[0];
+
+      const m = await tgUpload(
+        kind === 'photo' ? 'sendPhoto' : 'sendDocument',
+        { chat_id: String(channelId) },
+        [{ field: kind, buffer: it.buffer, filename: it.name, type: it.type }]
+      );
+
       ids.push(m.message_id);
       continue;
     }
 
-    const msgs = await tg('sendMediaGroup', {
-      chat_id: channelId,
-      media: chunk.map((x, idx) => ({
-        type: kind,
-        media: x.url,
-        ...(i === 0 && idx === 0 && caption
-          ? { caption, parse_mode: 'HTML' }
-          : {})
+    const msgs = await tgUpload(
+      'sendMediaGroup',
+      {
+        chat_id: String(channelId),
+        media: chunk.map((it, idx) => ({
+          type: kind,
+          media: 'attach://f' + idx,
+          ...(i === 0 && idx === 0 ? capFields : {})
+        }))
+      },
+      chunk.map((it, idx) => ({
+        field: 'f' + idx,
+        buffer: it.buffer,
+        filename: it.name,
+        type: it.type
       }))
-    });
+    );
 
     for (const m of msgs) ids.push(m.message_id);
   }
@@ -270,14 +384,15 @@ async function notify(uid, day) {
       }
     }
 
-    // 2) Kunning barcha proof fayllarini yig'amiz
+    // 2) Kunning barcha proof fayllarini yuklab olamiz
     const data = await entriesForDay(uid, day);
 
     const images = [];
     const docs = [];
     const proofsByTask = {};
+    const failed = [];
 
-    for (const [taskId, title] of Object.entries(titles)) {
+    for (const [taskId] of Object.entries(titles)) {
       for (const proof of data[taskId]?.proofs || []) {
         try {
           const file = await bridge('signedRead', {
@@ -286,23 +401,38 @@ async function notify(uid, day) {
             path: proof.pathname
           });
 
-          const item = { url: file.url, name: proof.name, title };
+          const buffer = await download(file.url);
 
-          if (/^image\//.test(proof.type || '')) images.push(item);
-          else docs.push(item);
+          if (buffer.length > MAX_FILE) throw new Error('Too large');
 
-          (proofsByTask[taskId] ||= []).push(proof.name);
+          const type = proof.type || '';
+
+          const item = {
+            buffer,
+            name: proof.name || 'proof',
+            type
+          };
+
+          if (/^image\//.test(type) && buffer.length <= MAX_PHOTO) {
+            images.push(item);
+          } else {
+            docs.push(item);
+          }
+
+          (proofsByTask[taskId] ||= []).push(item.name);
         } catch (e) {
-          console.error('Signed read failed', proof.pathname, e.message);
+          console.error('Proof load failed', proof.pathname, e.message);
+          failed.push(proof.name || 'proof');
         }
       }
     }
 
-    const name = cfg?.name || cfg?.firstName || cfg?.username || '';
-    const summary = buildSummary(data, day, name, proofsByTask);
+    const who = await whoIs(uid, cfg);
+    const summary = buildSummary(data, day, who, proofsByTask, failed);
+
     const ids = [];
 
-    // 3) Yangisini yuboramiz: bitta tartibli xabar (caption = hisobot)
+    // 3) Yangi xabar: hisobot = fayl/rasm captioni (bitta tartibli xabar)
     const groups = [
       ['photo', images],
       ['document', docs]
@@ -310,20 +440,21 @@ async function notify(uid, day) {
 
     const captionFits = summary.length <= CAPTION_LIMIT;
 
-    try {
-      if (!groups.length || !captionFits) {
-        const sent = await tg('sendMessage', {
-          chat_id: channelId,
-          text: summary.slice(0, 4000),
-          parse_mode: 'HTML',
-          disable_web_page_preview: true
-        });
-        ids.push(sent.message_id);
-      }
+    if (!groups.length || !captionFits) {
+      const sent = await tg('sendMessage', {
+        chat_id: channelId,
+        text: summary.slice(0, 4000),
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
+      });
 
-      let first = true;
+      ids.push(sent.message_id);
+    }
 
-      for (const [kind, items] of groups) {
+    let first = true;
+
+    for (const [kind, items] of groups) {
+      try {
         await sendGroup(
           channelId,
           kind,
@@ -331,30 +462,22 @@ async function notify(uid, day) {
           first && captionFits ? summary : '',
           ids
         );
+
         first = false;
-      }
-    } catch (e) {
-      console.error('Media delivery failed', e);
+      } catch (e) {
+        console.error('Media delivery failed', e.message);
 
-      // Zaxira: yuborilganlarini tozalab, matn + havolalar yuboramiz
-      for (const mid of ids.splice(0)) {
-        await tg('deleteMessage', {
+        const sent = await tg('sendMessage', {
           chat_id: channelId,
-          message_id: mid
-        }).catch(() => {});
+          text:
+            '⚠️ Fayl yuborilmadi: ' +
+            esc(items.map(x => x.name).join(', ')) +
+            '\n' + esc(e.message),
+          parse_mode: 'HTML'
+        }).catch(() => null);
+
+        if (sent) ids.push(sent.message_id);
       }
-
-      const links = [...images, ...docs]
-        .map(x => '🔗 ' + esc(x.name) + '\n' + esc(x.url))
-        .join('\n');
-
-      const sent = await tg('sendMessage', {
-        chat_id: channelId,
-        text: (summary + (links ? '\n\n' + links : '')).slice(0, 4000),
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      });
-      ids.push(sent.message_id);
     }
 
     await save(statePath, { ids });
