@@ -376,3 +376,5 @@ body.learning-body .learning-main .float button{background:#19784b!important;col
  body,.main,.learning-main,.reader,.content-panel{background:#fff!important;color:#111!important}
  .sidebar,.workspace-sidebar,.game-overlay,.od-game-overlay{display:none!important}
 }
+
+.speaking-room-home{display:flex;justify-content:space-between;align-items:center;gap:23px;border-radius:23px;padding:clamp(22px,3vw,40px);margin:32px 0;background:linear-gradient(115deg,#e9f9ed,#fff);border:1px solid #d1e8d7;color:#1b4a32}.speaking-room-home h2{font-size:clamp(26px,3.2vw,39px);letter-spacing:-1.3px;color:#19432e;line-height:1.2;margin:12px 0}.speaking-room-home h2 span{color:#188b59}.speaking-room-home p{max-width:750px;color:#557360;line-height:1.8;font-size:13px;margin:0 0 22px}.speaking-room-home-icon{font-size:clamp(32px,5vw,65px);min-width:150px;white-space:nowrap;text-align:center;background:#e0f6df;padding:23px;border-radius:20px}@media(max-width:700px){.speaking-room-home{flex-direction:column;align-items:flex-start}.speaking-room-home-icon{width:100%;font-size:35px}}
