@@ -66,15 +66,23 @@ async function ensurePC(){
  if(localStream)localStream.getTracks().forEach(track=>peer.addTrack(track,localStream));
  return pc
 }
-async function startOffer(){if(session.role!=='host'||!voiceStarted||!roomState.guestName)return;const p=await ensurePC();if(p.signalingState!=='stable'||offerDone)return;offerDone=true;const offer=await p.createOffer();await p.setLocalDescription(offer);await sendEvent('signal',{signal:{type:'offer',sdp:offer.sdp}})}
+function waitForIce(peer){
+ if(peer.iceGatheringState==='complete')return Promise.resolve();
+ return new Promise(resolve=>{
+  const timeout=setTimeout(()=>{peer.removeEventListener('icegatheringstatechange',onChange);resolve()},6500);
+  function onChange(){if(peer.iceGatheringState==='complete'){clearTimeout(timeout);peer.removeEventListener('icegatheringstatechange',onChange);resolve()}}
+  peer.addEventListener('icegatheringstatechange',onChange);
+ });
+}
+async function startOffer(){if(session.role!=='host'||!voiceStarted||!roomState.guestName)return;const p=await ensurePC();if(p.signalingState!=='stable'||offerDone)return;offerDone=true;const offer=await p.createOffer();await p.setLocalDescription(offer);await waitForIce(p);await sendEvent('signal',{signal:{type:'offer',sdp:p.localDescription.sdp}})}
 async function handleSignal(signal){
  if(!signal||!voiceStarted)return;
  const peer=await ensurePC();
  try{
   if(signal.type==='offer'&&session.role==='guest'){
    await peer.setRemoteDescription({type:'offer',sdp:signal.sdp});
-   const answer=await peer.createAnswer();await peer.setLocalDescription(answer);
-   await sendEvent('signal',{signal:{type:'answer',sdp:answer.sdp}});
+   const answer=await peer.createAnswer();await peer.setLocalDescription(answer);await waitForIce(peer);
+   await sendEvent('signal',{signal:{type:'answer',sdp:peer.localDescription.sdp}});
   }else if(signal.type==='answer'&&session.role==='host'&&peer.signalingState==='have-local-offer'){
    await peer.setRemoteDescription({type:'answer',sdp:signal.sdp});
   }else if(signal.type==='candidate'&&signal.candidate){
