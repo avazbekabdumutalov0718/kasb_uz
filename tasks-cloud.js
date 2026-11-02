@@ -27,7 +27,7 @@ async function update(day,id,state){
  window.WRTasks?.importTask(day,id,r.item);
 }
 async function upload(day,id,file){
- if(!ready)return null;
+ if(!ready)throw Error('Bulutli saqlashga kirilmagan. Telegram orqali kiring.');
  if(file.size>100*1024*1024)throw Error('100 MB dan katta proof yuborib bo‘lmaydi.');
  if(!uid)throw Error('Telegram login is required');status('☁ '+file.name+' bulutga yuklanmoqda…');
  const source=await import('https://esm.sh/@vercel/blob@2.8.2/client');
@@ -35,7 +35,7 @@ async function upload(day,id,file){
  // UID is not exposed to the browser API: fetch the scoped upload path with a server challenge instead.
  // The server also validates the verified user ID and path.
  const full=prefix+crypto.randomUUID()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-120);
- const blob=await source.upload(full,file,{access:'public',handleUploadUrl:'/api/tasks-upload',clientPayload:JSON.stringify({day,id}),multipart:file.size>10*1024*1024});
+ const blob=await source.upload(full,file,{access:'public',handleUploadUrl:'/api/tasks-upload',clientPayload:JSON.stringify({day,id}),multipart:file.size>10*1024*1024,contentType:file.type||'application/octet-stream'});
  const saved=await parse(await fetch('/api/tasks-sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'proof',day,id,proof:{url:blob.url,pathname:blob.pathname,name:file.name,type:file.type}})}));
  window.WRTasks?.importTask(day,id,saved.item);
  status('✓ '+file.name+' cloud’da saqlandi');
