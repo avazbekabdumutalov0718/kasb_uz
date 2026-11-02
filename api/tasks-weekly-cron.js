@@ -4,7 +4,7 @@ export const config={maxDuration:60};
 const groupItems={Reading:['r1','r2','r3'],Listening:['l1','l2','l3'],Speaking:['s1','s2','s3','s4','s5','s6'],Writing:['w1','w2','w3'],Gym:['g1'],Namoz:['p1','p2','p3','p4','p5']};
 const shift=(s,n)=>{const d=new Date(s+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const short=['Du','Se','Ch','Pa','Ju','Sh','Ya'];
-export async function POST(req){
+export async function GET(req){
  if(req.headers.get('authorization')!=='Bearer '+(process.env.CRON_SECRET||process.env.WORDRUSH_WEEKLY_CRON_SECRET))return Response.json({error:'Forbidden'},{status:403});
  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tashkent',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const localTime=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tashkent',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());
