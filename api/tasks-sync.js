@@ -15,8 +15,33 @@ if(action==='delete'){
  await publishScore(uid,day);await notify(uid,day,null);
  return response({item:current});
 }
-if(action==='proof'){const p=body.proof;if(!p||!String(p.pathname).startsWith(proofPrefix(uid,day,id)))return response({error:'Invalid proof path'},400);let cloud;try{cloud=await bridge('fileInfo',{uid,day,id,path:p.pathname})}catch{return response({error:'Proof not found'},400)}if(cloud.path!==p.pathname||cloud.size>100*1024*1024)return response({error:'Invalid proof'},400);current.proofs??=[];if(!current.proofs.some(x=>x.pathname===p.pathname)){current.proofs.push({id:randomUUID(),name:String(p.name||'Proof').slice(0,140),url:'',pathname:p.pathname,size:cloud.size,type:p.type||'',createdAt:new Date().toISOString()});await save(taskPath(uid,day,id),current);await publishScore(uid,day);await notify(uid,day,current.proofs.at(-1))}return response({item:current})}
+if(action==='proof'){const p=body.proof;if(!p||!String(p.pathname).startsWith(proofPrefix(uid,day,id)))return response({error:'Invalid proof path'},400);let cloud;try{cloud=await bridge('fileInfo',{uid,day,id,path:p.pathname})}catch{return response({error:'Proof not found'},400)}if(cloud.path!==p.pathname||cloud.size>100*1024*1024)return response({error:'Invalid proof'},400);current.proofs??=[];if(!current.proofs.some(x=>x.pathname===p.pathname)){current.done=true;current.clock=new Date().toISOString();current.proofs.push({id:randomUUID(),name:String(p.name||'Proof').slice(0,140),url:'',pathname:p.pathname,size:cloud.size,type:p.type||'',createdAt:new Date().toISOString()});await save(taskPath(uid,day,id),current);await publishScore(uid,day);await notify(uid,day,current.proofs.at(-1))}return response({item:current})}
 return response({error:'Unknown action'},400)}
-async function notify(uid,day,proof){const cfg=await read(cfgPath(uid));if(!cfg?.channelId)return;try{const {tg}=await import('./_tasks-kit.js');const data=await entriesForDay(uid,day),done=Object.keys(titles).filter(id=>data[id].done&&data[id].proofs?.length).length;const summary=['📚 WORDRUSH TASKS — '+day,'✅ '+done+'/21','',...Object.entries(titles).map(([id,t])=>(data[id].done&&data[id].proofs?.length?'✅ ':'⬜ ')+t),'',...(proof?['📎 '+proof.name,proof.url]:[])].join('\n');const oldPath='wr-task-sync-v2/report/'+uid+'/'+day+'.json',old=await read(oldPath);if(old?.id)try{await tg('deleteMessage',{chat_id:cfg.channelId,message_id:old.id})}catch{}const x=await tg('sendMessage',{chat_id:cfg.channelId,text:summary.slice(0,3950),disable_web_page_preview:true});await save(oldPath,{id:x.message_id});}catch(e){console.error('Telegram channel delivery:',e.message)}}
+async function notify(uid,day,proof){
+ try{
+ const cfg=await read(cfgPath(uid));if(!cfg?.channelId)return {delivered:false,reason:'Kanal ulanmagan'};
+ const {tg}=await import('./_tasks-kit.js');
+ const data=await entriesForDay(uid,day),done=Object.values(data).filter(x=>x.done&&x.proofs?.length).length;
+ const lines=Object.entries(titles).map(([id,t])=>(data[id].done&&data[id].proofs?.length?'✅ ':'⬜ ')+t);
+ const summary='📚 WORDRUSH HOMEWORK\\n📅 '+day+'\\n📊 '+done+'/21 ball\\n\\n'+lines.join('\\n');
+ if(proof){
+  const file=await bridge('signedRead',{uid,day,path:proof.pathname});
+  const note='📎 Yangi proof · '+proof.name+'\\n✅ '+done+'/21 ball\\n'+day;
+  const isImage=/^image\//.test(proof.type||'');
+  const method=isImage?'sendPhoto':'sendDocument';
+  try{await tg(method,{chat_id:cfg.channelId,[isImage?'photo':'document']:file.url,caption:note.slice(0,950)})}
+  catch(e){console.error('Media delivery failed',e);await tg('sendMessage',{chat_id:cfg.channelId,text:note+'\\n'+file.url,disable_web_page_preview:true})}
+ }
+ const oldPath='wr-task-sync-v2/report/'+uid+'/'+day+'.json';
+ const old=await read(oldPath);
+ if(old?.id){
+  try{await tg('editMessageText',{chat_id:cfg.channelId,message_id:old.id,text:summary}) ;return {delivered:true}}
+  catch(e){console.error('Channel message edit failed',e.message)}
+ }
+ const sent=await tg('sendMessage',{chat_id:cfg.channelId,text:summary});
+ await save(oldPath,{id:sent.message_id});
+ return {delivered:true};
+ }catch(e){console.error('Telegram channel delivery:',e.message);return {delivered:false,reason:e.message}}
+}
 
 async function publishScore(uid,day){try{const data=await entriesForDay(uid,day);const done=Object.values(data).filter(x=>x.done&&x.proofs?.length).length;await save('wr-task-ranking-v1/'+day+'/'+uid+'.json',{uid,done,updatedAt:new Date().toISOString()})}catch(e){console.error('Ranking write failed:',e)}}
