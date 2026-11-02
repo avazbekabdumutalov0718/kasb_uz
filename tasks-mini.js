@@ -65,6 +65,7 @@ function renderMini(){
  $('#miniDayCount').textContent=done+' / '+total+' bajarildi';
  $('#miniTaskView').hidden=activeTab!=='tasks';
  $('#miniRating').hidden=activeTab!=='rating';
+ $('#miniAnalytics').hidden=activeTab!=='analytics';
  $('#miniDays').hidden=activeTab!=='tasks';
  $('#miniDayHeading').hidden=activeTab!=='tasks';
  $('#taskSections').hidden=activeTab!=='tasks';
@@ -83,7 +84,7 @@ $('#miniDays').addEventListener('click',e=>{
 });
 $('#miniTabs').addEventListener('click',e=>{
  const b=e.target.closest('[data-mini-tab]');if(!b)return;
- activeTab=b.dataset.miniTab;renderMini();if(activeTab==='rating')loadRanking();
+ activeTab=b.dataset.miniTab;renderMini();if(activeTab==='rating')loadRanking();if(activeTab==='analytics')window.WRAnalytics?.load();
  try{telegram?.HapticFeedback?.selectionChanged()}catch{}
 });
 const observer=new MutationObserver(()=>{renderMini()});
