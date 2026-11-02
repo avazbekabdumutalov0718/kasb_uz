@@ -1,5 +1,5 @@
 import {createHmac,timingSafeEqual} from 'node:crypto';
-import {put,list} from '@vercel/blob';
+
 export const root='wr-task-sync-v2/';
 const eq=(a,b)=>{const x=Buffer.from(String(a||'')),y=Buffer.from(String(b||''));return x.length===y.length&&timingSafeEqual(x,y)};
 function key(){return process.env.TASKS_SESSION_SECRET}
@@ -14,23 +14,7 @@ export const validTask=id=>Object.hasOwn(titles,String(id||''));
 export const taskPath=(uid,day,id)=>root+'u/'+uid+'/'+day+'/'+id+'.json';
 export const cfgPath=uid=>root+'c/'+uid+'.json';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-export async function read(path){
-  for(let attempt=0;attempt<4;attempt++){
-    try{
-      const x=await list({prefix:path,limit:1});
-      const item=x.blobs.find(b=>b.pathname===path);
-      if(!item)return null;
-      const r=await fetch(item.url,{cache:'no-store'});
-      if(!r.ok)throw Error('Blob fetch failed: '+r.status);
-      return await r.json();
-    }catch(e){
-      const limited=/rate.?limit|too many requests|429/i.test(String(e?.message||e));
-      if(!limited||attempt===3)throw e;
-      const serverDelay=Number(e?.retryAfter)||0;
-      await pause(Math.min(7000,Math.max(serverDelay*1000,500*Math.pow(2,attempt))));
-    }
-  }
-}
+export async function read(path){return (await bridge('read',{path})).data}
 export async function entriesForDay(uid,day){
   const ids=Object.keys(titles),results={};
   // Limit Blob API concurrency; 21 parallel list() calls frequently trigger HTTP 429.
@@ -44,7 +28,9 @@ export async function entriesForDay(uid,day){
   await Promise.all([worker(),worker()]);
   return results;
 }
-export async function save(path,data){return put(path,JSON.stringify(data),{access:'public',contentType:'application/json',allowOverwrite:true,addRandomSuffix:false,cacheControlMaxAge:0})}
+export async function save(path,data){return bridge('save',{path,data})}
 export async function entry(uid,day,id){return await read(taskPath(uid,day,id))||{proofs:[],done:false,seconds:0,duration:10,clock:''}}
 export const proofPrefix=(uid,day,id)=>'wr-task-proof/'+uid+'/'+day+'/'+id+'/';
 export async function tg(method,payload){const r=await fetch('https://api.telegram.org/bot'+process.env.TELEGRAM_BOT_TOKEN+'/'+method,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(13000)});const d=await r.json();if(!d.ok)throw Error(String(d.description||'Telegram error').slice(0,180));return d.result}
+
+export async function bridge(action,details={}){if(!process.env.WORDRUSH_BRIDGE_SECRET||!process.env.WORDRUSH_SUPABASE_URL)throw Error('Supabase bridge not configured');const r=await fetch(process.env.WORDRUSH_SUPABASE_URL+'/functions/v1/wordrush-tasks-bridge',{method:'POST',headers:{'Content-Type':'application/json','x-wordrush-internal':process.env.WORDRUSH_BRIDGE_SECRET},body:JSON.stringify({action,...details}),signal:AbortSignal.timeout(20000)});const j=await r.json().catch(()=>({error:'Bridge unavailable'}));if(!r.ok)throw Error(j.error||'Supabase request failed');return j}
