@@ -4,7 +4,7 @@ import { timingSafeEqual } from 'node:crypto';
 const port = Number(process.env.PORT || 10000);
 const token = process.env.TELEGRAM_BOT_TOKEN || '';
 const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET || '';
-const webBase = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_BASE_URL || '';
+const webBase = 'https://wordrush-chi.vercel.app';
 const website = 'https://wordrush-chi.vercel.app/';
 const miniApp = 'https://wordrush-chi.vercel.app/tasks.html?miniapp=1';
 const botConfigured = Boolean(token && webhookSecret);
@@ -46,7 +46,7 @@ async function setupWebhook() {
   }
   try {
     await telegram('setWebhook', {
-      url: new URL('/telegram/webhook', webBase).toString(),
+      url: new URL('/api/telegram-webhook', webBase).toString(),
       secret_token: webhookSecret,
       allowed_updates: ['message'],
       drop_pending_updates: false
