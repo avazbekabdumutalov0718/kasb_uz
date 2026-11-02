@@ -3,7 +3,7 @@
 const $=s=>document.querySelector(s),escapeHTML=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const API='./api/speaking-room',STORAGE='wordrush.room.session.v1',NAME_KEY='wordrush.room.name';
 let session=null,bank=null,eventsSeen=new Set(),roomState={hostName:'',guestName:'',current:null,turn:'host'},poll=null,polling=false,localStream=null,pc=null,voiceStarted=false,micMuted=false,remoteSignalIds=new Set(),offerDone=false,chosenPart=1;
-let clockInterval=null,clockStart=0;
+let clockInterval=null,clockStart=0,lastHeartbeat=0,micPromise=null,voiceRequested=false;
 const random=a=>a[Math.floor(Math.random()*a.length)];
 function notice(s,err=false){const e=$('#globalMessage');e.textContent=s;e.hidden=false;e.classList.toggle('error',err)}
 async function api(body){const response=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});let data=await response.json().catch(()=>({error:'Server error'}));if(!response.ok)throw Error(data.error||'Request failed');return data}
@@ -15,7 +15,10 @@ function renderConnected(){const exists=!!roomState.guestName;$('#people').inner
 }
 function enterRoom(payload){session={code:payload.code,token:payload.token,role:payload.role,name:payload.name||$('#userName').value.trim()||'Learner'};
  saveSession();$('#joinScreen').hidden=true;$('#roomScreen').hidden=false;$('#displayCode').textContent=session.code;history.replaceState(null,'','#'+session.code);roomState={hostName:payload.role==='host'?session.name:payload.room?.hostName||'Host',guestName:payload.role==='guest'?session.name:'',current:null,turn:'host'};
- renderConnected();startPolling();if(session.role==='guest')sendEvent('ready',{});
+ renderConnected();startPolling();
+ if(session.role==='guest')sendEvent('ready',{}).catch(()=>{});
+ if(localStream){voice().catch(e=>notice('Voice: '+e.message,true))}
+
 }
 async function sendEvent(type,data={}){if(!session)return;await api({action:'event',code:session.code,token:session.token,type,data})}
 async function loadBank(){if(bank)return bank;const response=await fetch('./speaking-room-questions.json');if(!response.ok)throw Error('Speaking questions unavailable');const data=await response.json();if(!Array.isArray(data.groups)||!data.groups.length)throw Error('Speaking bank empty');bank=data.groups;return bank}
@@ -28,10 +31,12 @@ function renderTopic(){const current=roomState.current;if(!current||!bank){$('#t
 function renderChat(messages){const e=$('#chatMessages');const nearBottom=e.scrollHeight-e.scrollTop-e.clientHeight<55;e.innerHTML=messages.slice(-60).map(m=>'<div class="chat-entry"><strong>'+escapeHTML(m.role==='host'?roomState.hostName:roomState.guestName)+'</strong><div>'+escapeHTML(m.data.message)+'</div></div>').join('');if(nearBottom)e.scrollTop=e.scrollHeight}
 async function pollRoom(){
  if(!session||polling)return;polling=true;
+ if(Date.now()-lastHeartbeat>9000){lastHeartbeat=Date.now();api({action:'heartbeat',code:session.code,token:session.token}).catch(()=>{})}
  try{
   const r=await fetch(API+'?code='+encodeURIComponent(session.code)+'&token='+encodeURIComponent(session.token)+'&t='+Date.now(),{cache:'no-store'});
   const data=await r.json();if(!r.ok)throw Error(data.error||'Room offline');
   const justJoined=!roomState.guestName&&!!data.guestName;
+  const otherOnline=data.guestOnline!==false;
   roomState.hostName=data.hostName;roomState.guestName=data.guestName;
   const entries=Array.isArray(data.events)?data.events:[];
   let newItems=entries.filter(x=>!eventsSeen.has(x.id));
@@ -81,7 +86,7 @@ async function voice(){
  if(!navigator.mediaDevices?.getUserMedia){notice('Mikrofon bu brauzerda ishlamaydi.',true);return}
  try{
   $('#voiceStatus').textContent='Mikrofon ruxsati so‘ralmoqda…';
-  localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true},video:false});
+  localStream=localStream||await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},video:false});
   voiceStarted=true;await ensurePC();$('#startVoice').disabled=true;$('#muteVoice').disabled=false;
   $('#voiceStatus').textContent='✓ Microphone ready. Sherik ham micni yoqishi kerak.';
   if(session.role==='host')await startOffer();
@@ -96,10 +101,17 @@ function timer(){if(clockInterval){clearInterval(clockInterval);clockInterval=nu
  tick();clockInterval=setInterval(tick,1000);
 }
 function exitRoom(){if(session)sendEvent('leave',{}).catch(()=>{});clearInterval(poll);clearInterval(clockInterval);stopVoice();session=null;sessionStorage.removeItem(STORAGE);history.replaceState(null,'',location.pathname);$('#roomScreen').hidden=true;$('#joinScreen').hidden=false;eventsSeen.clear();roomState={hostName:'',guestName:'',current:null,turn:'host'};$('#globalMessage').hidden=true}
-async function start(action){const name=$('#userName').value.trim()||'Learner';localStorage.setItem(NAME_KEY,name);try{
+async function start(action){const name=$('#userName').value.trim()||'Learner';localStorage.setItem(NAME_KEY,name);
+ const button=action==='random'?$('#findPartner'):action==='create'?$('#createRoom'):$('#joinRoom');
+ button.disabled=true;
+ // Start click is a user gesture: request microphone immediately, before any network await.
+ if(!localStream && navigator.mediaDevices?.getUserMedia){
+  micPromise=navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},video:false}).then(s=>{localStream=s;return s}).catch(err=>{notice('Mikrofon uchun ruxsat kerak: '+err.message,true);return null});
+ }
+ try{
  let body={action,name};if(action==='join')body.code=$('#roomCodeInput').value.toUpperCase().replace(/[^A-Z0-9]/g,'');
- const r=await api(body);enterRoom(r);notice(action==='random'&&!r.matched?'Random sherik qidirilmoqda…':'Room yaratildi. Havola bilan sherikni taklif qiling.');
- }catch(e){notice(e.message,true)}
+ const r=await api(body);if(micPromise)await micPromise;enterRoom(r);notice(action==='random'&&!r.matched?'Online sherik qidirilmoqda. Boshqa foydalanuvchi Start bosganda avtomatik ulanadi…':'Ulandingiz. Savollar avtomatik chiqadi.');
+ }catch(e){notice(e.message,true)}finally{button.disabled=false}
 }
 async function init(){
  $('#userName').value=localStorage.getItem(NAME_KEY)||'';
