@@ -1,0 +1,33 @@
+name: Export complete WORDRUSH ZIP
+on:
+  push:
+    paths:
+      - .github/workflows/export-wordrush.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    name: Archive all tracked website files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout latest WORDRUSH
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Build ZIP preserving every tracked file
+        shell: bash
+        run: |
+          mkdir -p export
+          git ls-files -z | xargs -0 zip -q -9 export/WORDRUSH_COMPLETE_SITE.zip
+          unzip -t export/WORDRUSH_COMPLETE_SITE.zip | tail -n 1
+          echo "Files archived: $(unzip -Z1 export/WORDRUSH_COMPLETE_SITE.zip | wc -l)"
+      - name: Upload downloadable ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WORDRUSH_COMPLETE_SITE
+          path: export/WORDRUSH_COMPLETE_SITE.zip
+          if-no-files-found: error
+          retention-days: 7
