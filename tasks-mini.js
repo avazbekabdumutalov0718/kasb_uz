@@ -30,6 +30,15 @@ function readStats(){
  return {date:d,done,allDone,allDays:Object.keys(data).length};
 }
 let activeTab='tasks';
+async function loadRanking(){
+ const target=$('#miniRating');if(!target)return;
+ const d=$('#dateSelect').value||today();
+ target.innerHTML='<h3>Reyting 🏆</h3><p>Yuklanmoqda…</p>';
+ try{const r=await fetch('/api/tasks-ranking?day='+encodeURIComponent(d),{credentials:'same-origin',cache:'no-store'});const j=await r.json();if(!r.ok)throw Error(j.error||'Server xatosi');
+ const safe=s=>String(s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
+ target.innerHTML='<h3>🏆 Kunlik reyting · '+safe(d)+'</h3><p>'+j.participants+' ishtirokchi · faqat proof bilan tasdiqlangan vazifalar</p>'+(j.ranking.length?'<ol class="rating-list">'+j.ranking.map(x=>'<li style="padding:12px;border-bottom:1px solid #ddd;display:flex;justify-content:space-between"><span>'+x.position+'. '+safe(x.name)+(x.mine?' (Siz)':'')+'</span><strong>'+x.score+'/21</strong></li>').join('')+'</ol>':'<p>Bu kunda hali tasdiqlangan natija yo‘q.</p>');
+ }catch(e){target.innerHTML='<h3>Reyting 🏆</h3><p>'+e.message+'</p>'}
+}
 function renderMini(){
  const v=readStats();
  const todayDate=today();
@@ -74,7 +83,7 @@ $('#miniDays').addEventListener('click',e=>{
 });
 $('#miniTabs').addEventListener('click',e=>{
  const b=e.target.closest('[data-mini-tab]');if(!b)return;
- activeTab=b.dataset.miniTab;renderMini();
+ activeTab=b.dataset.miniTab;renderMini();if(activeTab==='rating')loadRanking();
  try{telegram?.HapticFeedback?.selectionChanged()}catch{}
 });
 const observer=new MutationObserver(()=>{renderMini()});
