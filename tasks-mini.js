@@ -69,7 +69,7 @@ function renderMini(){
  $('#miniDays').hidden=activeTab!=='tasks';
  $('#miniDayHeading').hidden=activeTab!=='tasks';
  $('#taskSections').hidden=activeTab!=='tasks';
- $('.notice-line').hidden=activeTab!=='tasks';
+
  document.querySelectorAll('[data-mini-tab]').forEach(btn=>{
  btn.classList.toggle('selected',btn.dataset.miniTab===activeTab);
  btn.setAttribute('aria-selected',String(btn.dataset.miniTab===activeTab));
