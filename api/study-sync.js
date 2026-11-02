@@ -7,6 +7,6 @@ export async function POST(req){
  if(day!==today)return response({error:'Only today can be synced'},400);
  const seconds=Number(b.seconds),pomodoros=Number(b.pomodoros);
  if(!Number.isFinite(seconds)||seconds<0||seconds>86400||!Number.isFinite(pomodoros)||pomodoros<0||pomodoros>100)return response({error:'Invalid totals'},400);
- await bridge('studySave',{uid,day,seconds,pomodoros});return response({ok:true})
+ const screen_seconds=b.screen_seconds===undefined?undefined:Number(b.screen_seconds);if(screen_seconds!==undefined&&(!Number.isFinite(screen_seconds)||screen_seconds<0||screen_seconds>86400))return response({error:'Invalid screen time'},400);await bridge('studySave',{uid,day,seconds,pomodoros,screen_seconds});return response({ok:true})
  }catch(e){return response({error:'Study sync failed'},503)}
 }
