@@ -21,9 +21,9 @@ function articleUnits(){
  const map=new Map();
  for(const page of sources.articles||[]){
   if(page.p<4||page.p>252)continue;
-  const m=(page.text||'').slice(0,350).match(/ARTICLE\\s+(\\d{1,2})/i);
+  const header=(page.text||'').slice(0,500);const m=header.match(/ARTICLE\s+(\d{1,2})/i)||header.match(/A\s*R\s*T\s*I\s*C\s*L\s*E\s+([0-9 ]{1,5})\s*·/i);
   if(!m)continue;
-  const id=+m[1];if(id<1||id>61)continue;
+  const id=Number(m[1].replace(/\s+/g,''));if(id<1||id>61)continue;
   if(!map.has(id)){
    const lines=page.text.split('\\n').map(x=>x.trim()).filter(Boolean);
    const re=new RegExp('^0?'+id+'\\s+');
