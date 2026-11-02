@@ -18,7 +18,7 @@ import {
 
 import { randomUUID } from 'node:crypto';
 
-export const config = { maxDuration: 30 };
+export const config = { maxDuration: 60 };
 
 /* Telegram bot tokeni (fayl yuklash uchun kerak).
    Sizdagi env nomi boshqacha bo'lsa, shu yerda o'zgartiring. */
@@ -226,7 +226,7 @@ async function whoIs(uid, cfg) {
   return { name, username: String(username).replace(/^@/, '') };
 }
 
-function buildSummary(data, day, who, proofsByTask, failed) {
+function buildSummary(data, day, who, failed) {
   const done = Object.values(data).filter(
     x => x.done && x.proofs?.length
   ).length;
@@ -243,13 +243,7 @@ function buildSummary(data, day, who, proofsByTask, failed) {
 
   const blocks = Object.entries(titles).map(([id, t]) => {
     const ok = data[id]?.done && data[id]?.proofs?.length;
-    let block = (ok ? '✅ ' : '⬜ ') + esc(t);
-
-    for (const n of proofsByTask[id] || []) {
-      block += '\n   📎 ' + esc(n);
-    }
-
-    return block;
+    return (ok ? '✅ ' : '⬜ ') + esc(t);
   });
 
   let text = head.join('\n') + '\n\n' + blocks.join('\n\n');
@@ -387,96 +381,95 @@ async function notify(uid, day) {
     // 2) Kunning barcha proof fayllarini yuklab olamiz
     const data = await entriesForDay(uid, day);
 
-    const images = [];
-    const docs = [];
-    const proofsByTask = {};
+    // Hamma fayllarni parallel yuklab olamiz (tezroq bo'lishi uchun)
+    const perTask = {}; // taskId -> { images: [], docs: [] }
     const failed = [];
 
-    for (const [taskId] of Object.entries(titles)) {
-      for (const proof of data[taskId]?.proofs || []) {
-        try {
-          const file = await bridge('signedRead', {
-            uid,
-            day,
-            path: proof.pathname
-          });
+    await Promise.all(
+      Object.keys(titles).flatMap(taskId =>
+        (data[taskId]?.proofs || []).map(async proof => {
+          try {
+            const file = await bridge('signedRead', {
+              uid,
+              day,
+              path: proof.pathname
+            });
 
-          const buffer = await download(file.url);
+            const buffer = await download(file.url);
 
-          if (buffer.length > MAX_FILE) throw new Error('Too large');
+            if (buffer.length > MAX_FILE) throw new Error('Too large');
 
-          const type = proof.type || '';
+            const type = proof.type || '';
 
-          const item = {
-            buffer,
-            name: proof.name || 'proof',
-            type
-          };
+            const item = {
+              buffer,
+              name: proof.name || 'proof',
+              type,
+              at: proof.createdAt || ''
+            };
 
-          if (/^image\//.test(type) && buffer.length <= MAX_PHOTO) {
-            images.push(item);
-          } else {
-            docs.push(item);
+            const slot = (perTask[taskId] ||= { images: [], docs: [] });
+
+            if (/^image\//.test(type) && buffer.length <= MAX_PHOTO) {
+              slot.images.push(item);
+            } else {
+              slot.docs.push(item);
+            }
+          } catch (e) {
+            console.error('Proof load failed', proof.pathname, e.message);
+            failed.push(proof.name || 'proof');
           }
-
-          (proofsByTask[taskId] ||= []).push(item.name);
-        } catch (e) {
-          console.error('Proof load failed', proof.pathname, e.message);
-          failed.push(proof.name || 'proof');
-        }
-      }
-    }
+        })
+      )
+    );
 
     const who = await whoIs(uid, cfg);
-    const summary = buildSummary(data, day, who, proofsByTask, failed);
+    const summary = buildSummary(data, day, who, failed);
 
     const ids = [];
 
-    // 3) Yangi xabar: hisobot = fayl/rasm captioni (bitta tartibli xabar)
-    const groups = [
-      ['photo', images],
-      ['document', docs]
-    ].filter(g => g[1].length);
+    // 3) Avval umumiy hisobot (ism, kun, ball, 21 ta topshiriq)
+    const head = await tg('sendMessage', {
+      chat_id: channelId,
+      text: summary.slice(0, 4000),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    });
 
-    const captionFits = summary.length <= CAPTION_LIMIT;
+    ids.push(head.message_id);
 
-    if (!groups.length || !captionFits) {
-      const sent = await tg('sendMessage', {
-        chat_id: channelId,
-        text: summary.slice(0, 4000),
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-      });
+    // 4) Keyin har topshiriq o'z nomi va o'z fayllari bilan, tartib bilan
+    for (const [taskId, title] of Object.entries(titles)) {
+      const slot = perTask[taskId];
 
-      ids.push(sent.message_id);
-    }
+      if (!slot) continue;
 
-    let first = true;
+      const caption = '✅ <b>' + esc(title) + '</b>';
 
-    for (const [kind, items] of groups) {
-      try {
-        await sendGroup(
-          channelId,
-          kind,
-          items,
-          first && captionFits ? summary : '',
-          ids
-        );
+      const groups = [
+        ['photo', slot.images],
+        ['document', slot.docs]
+      ].filter(g => g[1].length);
 
-        first = false;
-      } catch (e) {
-        console.error('Media delivery failed', e.message);
+      for (const [kind, items] of groups) {
+        items.sort((a, b) => a.at.localeCompare(b.at));
 
-        const sent = await tg('sendMessage', {
-          chat_id: channelId,
-          text:
-            '⚠️ Fayl yuborilmadi: ' +
-            esc(items.map(x => x.name).join(', ')) +
-            '\n' + esc(e.message),
-          parse_mode: 'HTML'
-        }).catch(() => null);
+        try {
+          await sendGroup(channelId, kind, items, caption, ids);
+        } catch (e) {
+          console.error('Media delivery failed', e.message);
 
-        if (sent) ids.push(sent.message_id);
+          const sent = await tg('sendMessage', {
+            chat_id: channelId,
+            text:
+              caption +
+              '\n⚠️ Fayl yuborilmadi: ' +
+              esc(items.map(x => x.name).join(', ')),
+            parse_mode: 'HTML'
+          }).catch(() => null);
+
+          if (sent) ids.push(sent.message_id);
+        }
       }
     }
 
