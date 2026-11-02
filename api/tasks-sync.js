@@ -19,7 +19,7 @@ if(action==='proof'){const p=body.proof;if(!p||!String(p.pathname).startsWith(pr
 return response({error:'Unknown action'},400)}
 async function notify(uid,day,proof){
  try{
- const cfg=await read(cfgPath(uid));if(!cfg?.channelId)return {delivered:false,reason:'Kanal ulanmagan'};
+ const cfg=await read(cfgPath(uid)).catch(()=>null);const channelId=process.env.WORDRUSH_CHANNEL_ID||cfg?.channelId;if(!channelId)return {delivered:false,reason:'Kanal ulanmagan'};
  const {tg}=await import('./_tasks-kit.js');
  const data=await entriesForDay(uid,day),done=Object.values(data).filter(x=>x.done&&x.proofs?.length).length;
  const lines=Object.entries(titles).map(([id,t])=>(data[id].done&&data[id].proofs?.length?'✅ ':'⬜ ')+t);
@@ -29,16 +29,16 @@ async function notify(uid,day,proof){
   const note='📎 Yangi proof · '+proof.name+'\\n✅ '+done+'/21 ball\\n'+day;
   const isImage=/^image\//.test(proof.type||'');
   const method=isImage?'sendPhoto':'sendDocument';
-  try{await tg(method,{chat_id:cfg.channelId,[isImage?'photo':'document']:file.url,caption:note.slice(0,950)})}
-  catch(e){console.error('Media delivery failed',e);await tg('sendMessage',{chat_id:cfg.channelId,text:note+'\\n'+file.url,disable_web_page_preview:true})}
+  try{await tg(method,{chat_id:channelId,[isImage?'photo':'document']:file.url,caption:note.slice(0,950)})}
+  catch(e){console.error('Media delivery failed',e);await tg('sendMessage',{chat_id:channelId,text:note+'\\n'+file.url,disable_web_page_preview:true})}
  }
  const oldPath='wr-task-sync-v2/report/'+uid+'/'+day+'.json';
  const old=await read(oldPath);
  if(old?.id){
-  try{await tg('editMessageText',{chat_id:cfg.channelId,message_id:old.id,text:summary}) ;return {delivered:true}}
+  try{await tg('editMessageText',{chat_id:channelId,message_id:old.id,text:summary}) ;return {delivered:true}}
   catch(e){console.error('Channel message edit failed',e.message)}
  }
- const sent=await tg('sendMessage',{chat_id:cfg.channelId,text:summary});
+ const sent=await tg('sendMessage',{chat_id:channelId,text:summary});
  await save(oldPath,{id:sent.message_id});
  return {delivered:true};
  }catch(e){console.error('Telegram channel delivery:',e.message);return {delivered:false,reason:e.message}}
