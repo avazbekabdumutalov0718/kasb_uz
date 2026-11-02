@@ -26,7 +26,7 @@ async function update(day,id,state){
  const r=await parse(await fetch('/api/tasks-sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save',day,id,done:!!state.done,duration:Number(state.duration),seconds:Number(state.seconds)||0})}));
  window.WRTasks?.importTask(day,id,r.item);
 }
-async function upload(day,id,file){
+async function upload(day,id,file,note=''){
  if(!ready)throw Error('Bulutli saqlashga kirilmagan. Telegram orqali kiring.');
  if(file.size>100*1024*1024)throw Error('100 MB dan katta proof yuborib bo‘lmaydi.');
  if(!uid)throw Error('Telegram login is required');status('☁ '+file.name+' bulutga yuklanmoqda…');
@@ -35,10 +35,15 @@ async function upload(day,id,file){
  const uploaded=await fetch(uploadUrl,{method:'PUT',headers:{'Content-Type':file.type||'application/octet-stream'},body:file});
  if(!uploaded.ok){const error=await uploaded.text();throw Error('Storage upload failed: '+error.slice(0,180))}
  const blob={pathname:signed.path,url:''};
- const saved=await parse(await fetch('/api/tasks-sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'proof',day,id,proof:{url:'',pathname:blob.pathname,name:file.name,type:file.type}})}));
+ const saved=await parse(await fetch('/api/tasks-sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'proof',day,id,proof:{url:'',pathname:blob.pathname,name:file.name,type:file.type,note:String(note).slice(0,400)}})}));
  window.WRTasks?.importTask(day,id,saved.item);
  status('✓ '+file.name+' cloud’da saqlandi');
  return saved.item;
+}
+async function updateNote(day,id,proofId,note){
+ if(!ready)throw Error('Cloud login required');
+ const r=await parse(await fetch('/api/tasks-sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'note',day,id,proofId,note:String(note||'').slice(0,400)})}));
+ window.WRTasks?.importTask(day,id,r.item);return r.item;
 }
 async function remove(day,id,proofId){if(!ready)throw Error('Cloud login required');const r=await parse(await fetch('/api/tasks-sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',day,id,proofId})}));window.WRTasks?.importTask(day,id,r.item);return r.item}
 async function boot(){
@@ -50,7 +55,7 @@ window.WRTasksCloud={
  get ready(){return ready},
  getDay,
  update:(day,id,state)=>{pending=pending.then(()=>update(day,id,state)).catch(e=>status('Cloud save: '+e.message,true));return pending},
- upload,remove,
+ upload,remove,updateNote,
  refresh:()=>getDay(window.WRTasks?.day())
 };
 window.addEventListener('load',boot);
