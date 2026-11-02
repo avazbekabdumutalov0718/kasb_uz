@@ -16,7 +16,7 @@ export function analyze(rows,start,end=start){
 }
 export async function GET(req){
  const uid=user(req);if(!uid)return response({error:'Login required'},401);
- const q=new URL(req.url).searchParams;const end=q.get('end');if(end&&!/^\\d{4}-\\d{2}-\\d{2}$/.test(end))return response({error:'Invalid date'},400);
+ const q=new URL(req.url).searchParams;const end=q.get('end');if(end&&!/^\d{4}-\d{2}-\d{2}$/.test(end))return response({error:'Invalid date'},400);
  const now=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tashkent',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const target=end&&end<=now?end:now;const start=weekStart(target);
  try{const result=await bridge('weeklyData',{uid,start,end:target});const rows=result.rows||[];rows.uid=uid;return response(analyze(rows,start,target))}
