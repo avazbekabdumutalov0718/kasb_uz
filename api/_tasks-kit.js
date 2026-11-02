@@ -13,7 +13,37 @@ export const titles={r1:'4 ELS',r2:'1 article',r3:'25+ words',l1:'2 podcasts',l2
 export const validTask=id=>Object.hasOwn(titles,String(id||''));
 export const taskPath=(uid,day,id)=>root+'u/'+uid+'/'+day+'/'+id+'.json';
 export const cfgPath=uid=>root+'c/'+uid+'.json';
-export async function read(path){const x=await list({prefix:path,limit:5});const entry=x.blobs.find(x=>x.pathname===path);if(!entry)return null;const r=await fetch(entry.url+'?v='+Date.now(),{cache:'no-store'});return r.ok?r.json():null}
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+export async function read(path){
+  for(let attempt=0;attempt<4;attempt++){
+    try{
+      const x=await list({prefix:path,limit:1});
+      const item=x.blobs.find(b=>b.pathname===path);
+      if(!item)return null;
+      const r=await fetch(item.url,{cache:'no-store'});
+      if(!r.ok)throw Error('Blob fetch failed: '+r.status);
+      return await r.json();
+    }catch(e){
+      const limited=/rate.?limit|too many requests|429/i.test(String(e?.message||e));
+      if(!limited||attempt===3)throw e;
+      const serverDelay=Number(e?.retryAfter)||0;
+      await pause(Math.min(7000,Math.max(serverDelay*1000,500*Math.pow(2,attempt))));
+    }
+  }
+}
+export async function entriesForDay(uid,day){
+  const ids=Object.keys(titles),results={};
+  // Limit Blob API concurrency; 21 parallel list() calls frequently trigger HTTP 429.
+  let next=0;
+  async function worker(){
+    while(next<ids.length){
+      const id=ids[next++];
+      results[id]=await entry(uid,day,id);
+    }
+  }
+  await Promise.all([worker(),worker()]);
+  return results;
+}
 export async function save(path,data){return put(path,JSON.stringify(data),{access:'public',contentType:'application/json',allowOverwrite:true,addRandomSuffix:false,cacheControlMaxAge:0})}
 export async function entry(uid,day,id){return await read(taskPath(uid,day,id))||{proofs:[],done:false,seconds:0,duration:10,clock:''}}
 export const proofPrefix=(uid,day,id)=>'wr-task-proof/'+uid+'/'+day+'/'+id+'/';
