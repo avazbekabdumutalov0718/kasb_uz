@@ -6,6 +6,8 @@ const shift=(s,n)=>{const d=new Date(s+'T12:00:00Z');d.setUTCDate(d.getUTCDate()
 const short=['Du','Se','Ch','Pa','Ju','Sh','Ya'];
 export async function GET(req){
  if(req.headers.get('authorization')!=='Bearer '+(process.env.CRON_SECRET||process.env.WORDRUSH_WEEKLY_CRON_SECRET))return Response.json({error:'Forbidden'},{status:403});
+ const channelId=process.env.WORDRUSH_CHANNEL_ID;
+ if(!channelId)return Response.json({error:'WORDRUSH_CHANNEL_ID not configured'},{status:503});
  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tashkent',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const localTime=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tashkent',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date());
  const dayOfWeek=new Date(today+'T12:00:00Z').getUTCDay();
@@ -16,14 +18,17 @@ export async function GET(req){
   const results=[];
   for(const {uid} of users){
    if(!/^\d+$/.test(uid))continue;
-   const path='wr-task-weekly-v1/'+uid+'/'+start+'.json';
+   const path='wr-task-weekly-v1/channel-'+uid+'/'+start+'.json';
    try{
     if((await bridge('read',{path})).data?.sentAt){results.push({uid,status:'already_sent'});continue}
     const {rows}=await bridge('weeklyData',{uid,start,end});rows.uid=uid;
     const report=analyze(rows,start,end);
     const byPath=new Map(rows.map(x=>[x.path,x.data]));
+    let displayName='Ishtirokchi '+uid.slice(-4);
+    try{const chat=await tg('getChat',{chat_id:uid});const name=[chat.first_name,chat.last_name].filter(Boolean).join(' ').trim();displayName=(name||chat.username||displayName).slice(0,90)}catch(e){console.warn('Telegram user name unavailable:',e.message)}
     const lines=[
       '📊 WORDRUSH — HAFTALIK HISOBOT',
+      '👤 '+displayName,
       '📅 '+start+' — '+end,
       '',
       '✅ Bajarilgan: '+report.completed+'/'+report.total,
@@ -45,7 +50,7 @@ export async function GET(req){
       '🔥 Yangi haftada ham davom eting!'
     ];
     const text=lines.join('\n');
-    const sent=await tg('sendMessage',{chat_id:uid,text:text.slice(0,4000),disable_web_page_preview:true});
+    const sent=await tg('sendMessage',{chat_id:channelId,text:text.slice(0,4000),disable_web_page_preview:true});
     await bridge('save',{path,data:{sentAt:new Date().toISOString(),messageId:sent.message_id,completed:report.completed,missed:report.missed}});
     results.push({uid,status:'sent'});
    }catch(e){console.error('Weekly report failed for user',uid,e);results.push({uid,status:'failed'})}
