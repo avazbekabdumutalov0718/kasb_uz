@@ -136,6 +136,14 @@ export async function POST(req) {
     return response({ item: current });
   }
 
+  if (action === 'note') {
+    const proof = current.proofs?.find(p => p.id === body.proofId);
+    if (!proof) return response({ error: 'Proof not found' }, 404);
+    proof.note = String(body.note || '').slice(0, 400);
+    await save(taskPath(uid, day, id), current);
+    return response({ item: current });
+  }
+
   if (action === 'proof') {
     const p = body.proof;
 
@@ -168,6 +176,7 @@ export async function POST(req) {
         pathname: p.pathname,
         size: cloud.size,
         type: p.type || '',
+        note: String(p.note || '').slice(0, 400),
         createdAt: new Date().toISOString()
       });
 
