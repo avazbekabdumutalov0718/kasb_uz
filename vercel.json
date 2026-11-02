@@ -3,6 +3,10 @@
     {
       "path": "/api/tasks-weekly-cron",
       "schedule": "0 18 * * 0"
+    },
+    {
+      "path": "/api/tasks-daily-cron",
+      "schedule": "0 16 * * *"
     }
   ]
 }
