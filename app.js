@@ -20,7 +20,7 @@
   let game=null;
   let study=null;
   let toastTimeout;
-  const MODES={flash:{title:'Flashcards',label:'MEMORY MODE',intro:'Aylantiring, tarjimani eslang va bilganlaringizni belgilang.'},choice:{title:'Multiple Choice',label:'PRECISION MODE',intro:'Inglizcha so‘zning to‘g‘ri o‘zbekcha ma’nosini tanlang.'},match:{title:'Matching Pairs',label:'CONNECTION MODE',intro:'Inglizcha va o‘zbekcha juftliklarni toping.'},gap:{title:'Fill the Gap',label:'CONTEXT MODE',intro:'Gapdagi bo‘sh joyga mos inglizcha so‘zni yozing.'},rush:{title:'Word Rush',label:'SPEED RUN · 60 SECONDS',intro:'60 soniyada iloji boricha ko‘p to‘g‘ri javob toping.'},typing:{title:'Typing Race',label:'SPELLING MODE',intro:'Tarjimasiga qarab inglizcha so‘zni to‘g‘ri yozing.'},builder:{title:'Sentence Builder',label:'STRUCTURE MODE',intro:'Aralash so‘zlar yoki harflardan to‘g‘ri ibora tuzing.'}};
+  const MODES={flash:{title:'Flashcards',label:'MEMORY MODE',intro:'Aylantiring, tarjimani eslang va bilganlaringizni belgilang.'},choice:{title:'Multiple Choice',label:'PRECISION MODE',intro:'Inglizcha so‘zning to‘g‘ri o‘zbekcha ma’nosini tanlang.'},match:{title:'Matching Pairs',label:'CONNECTION MODE',intro:'Inglizcha va o‘zbekcha juftliklarni toping.'},rush:{title:'Word Rush',label:'SPEED RUN · 60 SECONDS',intro:'60 soniyada iloji boricha ko‘p to‘g‘ri javob toping.'},typing:{title:'Typing Race',label:'SPELLING MODE',intro:'Tarjimasiga qarab inglizcha so‘zni to‘g‘ri yozing.'},builder:{title:'Sentence Builder',label:'STRUCTURE MODE',intro:'Aralash so‘zlar yoki harflardan to‘g‘ri ibora tuzing.'}};
 
   function toast(message){const item=$('#toast');item.textContent=message;item.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>item.classList.remove('show'),2900);}
   function renderDashboard(){
@@ -35,7 +35,7 @@
     $('#dayKnown').textContent=dayKnown;
     $('#dayKnownBar').style.width=(dayWords.length?dayKnown/dayWords.length*100:0)+'%';
     const area=$('#wordList');
-    if(!state.words.length){area.innerHTML='<div class="empty-words"><div class="empty-glyph">Aa</div><h4>Nothing here. Yet.</h4><p>Add your first word to unlock all seven games. Every counter starts at zero.</p></div>';return;}
+    if(!state.words.length){area.innerHTML='<div class="empty-words"><div class="empty-glyph">Aa</div><h4>Nothing here. Yet.</h4><p>Add your first word to unlock all six games. Every counter starts at zero.</p></div>';return;}
     area.innerHTML=state.words.map(item=>'<div class="word-entry"><div><b>'+html(item.w)+'</b> '+(item.day==='1-Day'?'<span class="day-word-tag">1-Day</span>':'')+'<small>'+html(item.u)+'</small>'+(item.d?'<p>'+html(item.d)+'</p>':'')+'</div><div class="entry-actions">'+(state.known.includes(item.id)?'<span class="entry-known" title="Mastered">✓</span>':'')+(item.day==='1-Day'?'':'<button class="delete-word" type="button" data-delete="'+html(item.id)+'" aria-label="Remove '+html(item.w)+'">✕</button>')+'</div></div>').join('');
     $$('[data-delete]',area).forEach(btn=>btn.addEventListener('click',()=>{const item=state.words.find(w=>w.id===btn.dataset.delete);if(!item||!confirm('“'+item.w+'” so‘zini ro‘yxatdan o‘chirasizmi?'))return;state.words=state.words.filter(w=>w.id!==item.id);state.known=state.known.filter(id=>id!==item.id);save();toast('So‘z o‘chirildi');}));
   }
@@ -61,7 +61,7 @@
     const overlay=$('#gameOverlay');overlay.hidden=false;document.body.style.overflow='hidden';
     const pool=shuffle(state.words);
     game={mode,pool,index:0,correct:0,attempts:0,time:60,timer:null,finished:false,flipped:false,pairs:null,matched:new Set(),selected:null,chosen:[],locked:false};
-    if(pool.length===0)return gameEmpty('Your word bank is empty','Add your first word or phrase to unlock all seven WORDRUSH games. Your counters will remain at zero until you start.');
+    if(pool.length===0)return gameEmpty('Your word bank is empty','Add your first word or phrase to unlock all six WORDRUSH games. Your counters will remain at zero until you start.');
     if(['choice','rush','match'].includes(mode)&&new Set(pool.map(x=>norm(mode==='choice'?x.u:x.w))).size<2)return gameEmpty('Add at least 2 different words','This mode needs at least two distinct vocabulary entries to create useful options or matching pairs.');
     if(mode==='rush'){
       const currentGame=game;
@@ -118,7 +118,7 @@
     if(game.mode==='flash')return flashcard();
     if(game.mode==='choice'||game.mode==='rush')return multipleChoice();
     if(game.mode==='match')return matchingPairs();
-    if(game.mode==='gap'||game.mode==='typing')return typingPrompt();
+    if(game.mode==='typing')return typingPrompt();
     if(game.mode==='builder')return sentenceBuilder();
   }
   function flashcard(){
@@ -159,21 +159,11 @@
       game.selected=null;$$('[data-left]').forEach(x=>x.classList.remove('selected'));
     });
   }
-  function makeGap(word){
-    // Day 1 entries each have their own reviewed, original sentence and an
-    // answer in the grammatical form that naturally fits its blank.
-    if(typeof word.g==='string'&&word.g.includes('________'))return word.g;
-    const source=word.e||'';const escaped=word.w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    try{const pattern=new RegExp(escaped,'gi');if(pattern.test(source))return source.replace(pattern,'________');}catch{}
-    return '________  —  '+(word.d||word.u);
-  }
   function typingPrompt(){
-    const word=game.pool[game.index],gap=game.mode==='gap';
-    const prompt=gap?makeGap(word):word.u;
-    const answer=gap&&word.ga?word.ga:word.w;
-    $('#challenge').innerHTML='<div class="challenge-label">'+(gap?'✎ FILL THE GAP · ENGLISH':'⌨ TYPING RACE · TRANSLATION')+'</div><p class="challenge-sub">'+(gap?'Bo‘sh joyga inglizcha so‘zni/iborani yozing.':'Berilgan tarjima uchun inglizcha so‘zni to‘liq yozing.')+'</p><div class="challenge-question">'+html(prompt)+'</div>'+(gap?'<p class="challenge-sub">Ma’nosi: '+html(word.u)+'</p>':'')+'<form id="typeForm"><input class="type-answer" id="typeInput" required autocomplete="off" spellcheck="false" placeholder="Your English answer..."><button type="submit">Check ↗</button></form><div id="feedback" class="feedback" aria-live="polite"></div><button id="nextQuestion" type="button" class="next-button" hidden>Next →</button>';
+    const word=game.pool[game.index];
+    $('#challenge').innerHTML='<div class="challenge-label">⌨ TYPING RACE · TRANSLATION</div><p class="challenge-sub">Berilgan tarjima uchun inglizcha so‘zni to‘liq yozing.</p><div class="challenge-question">'+html(word.u)+'</div><form id="typeForm"><input class="type-answer" id="typeInput" required autocomplete="off" spellcheck="false" placeholder="Your English answer..."><button type="submit">Check ↗</button></form><div id="feedback" class="feedback" aria-live="polite"></div><button id="nextQuestion" type="button" class="next-button" hidden>Next →</button>';
     $('#typeInput').focus({preventScroll:true});
-    $('#typeForm').onsubmit=event=>{event.preventDefault();if(game.locked)return;const value=$('#typeInput').value;if(!value.trim())return;game.locked=true;const correct=norm(value)===norm(answer)||(gap&&norm(value)===norm(word.w));record(word,correct);$('#typeInput').disabled=true;$('#typeForm button').disabled=true;progressAndFeedback(correct,answer);};
+    $('#typeForm').onsubmit=event=>{event.preventDefault();if(game.locked)return;const value=$('#typeInput').value;if(!value.trim())return;game.locked=true;const correct=norm(value)===norm(word.w);record(word,correct);$('#typeInput').disabled=true;$('#typeForm button').disabled=true;progressAndFeedback(correct,word.w);};
   }
   function sentenceBuilder(){
     const word=game.pool[game.index];const parts=word.w.trim().split(/\s+/).filter(Boolean);const letters=parts.length===1;const tokens=letters?Array.from(word.w):parts;const order=shuffle(tokens.map((t,i)=>({text:t,index:i})));game.chosen=[];
@@ -188,7 +178,7 @@
     if(game.timer){clearInterval(game.timer);game.timer=null;}
     state.stats.gamesPlayed++;save();
     const correct=game.correct,total=game.pool.length,percent=total?Math.round(correct/total*100):0,title=MODES[game.mode].title,playedMode=game.mode;
-    $('#gameContent').innerHTML='<div class="end-result"><div class="play-kicker">SESSION COMPLETE / WORDRUSH</div><div class="trophy-icon">🏆</div><h2>'+html(title)+' — completed!</h2><p>Bugungi mashg‘ulot yakunlandi. Har bir urinish sizni oldinga olib boradi.</p><div class="end-score">'+percent+'%</div><p><strong>'+correct+' / '+total+'</strong> ta to‘g‘ri · <strong>+'+(correct*10)+' XP</strong></p><button type="button" id="retryGame" class="btn btn-accent">↺ Play again</button><button type="button" id="backToGames" class="btn btn-outline">← All seven games</button></div>';
+    $('#gameContent').innerHTML='<div class="end-result"><div class="play-kicker">SESSION COMPLETE / WORDRUSH</div><div class="trophy-icon">🏆</div><h2>'+html(title)+' — completed!</h2><p>Bugungi mashg‘ulot yakunlandi. Har bir urinish sizni oldinga olib boradi.</p><div class="end-score">'+percent+'%</div><p><strong>'+correct+' / '+total+'</strong> ta to‘g‘ri · <strong>+'+(correct*10)+' XP</strong></p><button type="button" id="retryGame" class="btn btn-accent">↺ Play again</button><button type="button" id="backToGames" class="btn btn-outline">← All six games</button></div>';
     $('#retryGame').onclick=()=>startGame(playedMode);$('#backToGames').onclick=()=>{closeGame();location.hash='#games';};
   }
   renderDashboard();
