@@ -1,4 +1,5 @@
 name: Export complete WORDRUSH ZIP
+# Refresh export after adding TASKS checklist, proof storage and daily timers.
 on:
   push:
     paths:
