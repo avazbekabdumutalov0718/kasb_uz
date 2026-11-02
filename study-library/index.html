@@ -16,52 +16,70 @@ function flash(s){$('#toast').textContent=s;$('#toast').className='toast show';s
 const pagekey=(c,n)=>c+':'+n;
 function markedText(page){let value=esc(page.text);for(const h of savedHighlights.filter(h=>h.source===category&&h.p===page.p)){const t=esc(h.word);if(t&&value.includes(t))value=value.replace(t,'<mark>'+t+'</mark>')}return value}
 const CHUNKS={articles:13,essays:10,examiner:7,podcasts:10,vocab:2};
-async function boot(){
- for(const [key,total] of Object.entries(CHUNKS)){
-  const entries=[];
-  for(let i=0;i<total;i++){
-   const name='data/'+key+'-'+String(i).padStart(2,'0')+'.json';
-   try{const r=await fetch(name);if(!r.ok)throw Error(r.status);entries.push(...await r.json())}
-   catch(e){console.warn('Missing library file:',name,e)}
-  }
-  sources[key]=entries;
- }
- sources.task1=[];
- const articles=new Map();
- for(const page of sources.articles){
+const loaded={};let loadToken=0;
+function articleUnits(){
+ const map=new Map();
+ for(const page of sources.articles||[]){
   if(page.p<4||page.p>252)continue;
-  const m=page.text.slice(0,250).match(/ARTICLE\s+(\d{1,2})/i);
+  const m=(page.text||'').slice(0,350).match(/ARTICLE\\s+(\\d{1,2})/i);
   if(!m)continue;
-  const id=Number(m[1]);if(!(id>=1&&id<=61))continue;
-  if(!articles.has(id)){
-   const lines=page.text.split('\n').map(s=>s.trim()).filter(Boolean);
-   const reg=new RegExp('^0?'+id+'\\s+');
-   const found=lines.find(s=>reg.test(s)&&!/ARTICLE/i.test(s));
-   const title=(found||'Article '+id).replace(reg,'').replace(/\bREADING\b.*$/i,'').trim();
-   articles.set(id,{id,title,pages:[],source:'articles'});
+  const id=+m[1];if(id<1||id>61)continue;
+  if(!map.has(id)){
+   const lines=page.text.split('\\n').map(x=>x.trim()).filter(Boolean);
+   const re=new RegExp('^0?'+id+'\\\\s+');
+   const title=(lines.find(x=>re.test(x)&&!/ARTICLE/i.test(x))||'Article '+id).replace(re,'').replace(/\\bREADING\\b.*$/i,'').trim();
+   map.set(id,{id,title,pages:[],source:'articles'});
   }
-  articles.get(id).pages.push(page.p);
+  map.get(id).pages.push(page.p);
  }
- units.articles=Array.from({length:61},(_,i)=>articles.get(i+1)||{id:i+1,title:'Article '+(i+1),pages:[],source:'articles'});
- for(const key of ['essays','podcasts']){
-  const first=key==='essays'?4:5;
-  units[key]=Array.from({length:61},(_,i)=>{
-   const ids=[first+3*i,first+3*i+1,first+3*i+2];
-   const p=sources[key].find(x=>x.p===ids[0]);
-   const lines=(p?.text||'').split('\n').map(s=>s.trim()).filter(Boolean);
-   const number=String(i+1).padStart(2,'0');
-   let found=key==='essays'?lines.find(x=>x.startsWith(number+' ')):lines.find(x=>x.endsWith(number)&&!x.startsWith('UNIT'));
-   const title=(found||key+' '+(i+1)).replace(new RegExp('^'+number+'\\s*'),'').replace(new RegExp(number+'$'),'').replace(/\b(OPINION|DISCUSSION|ADVANTAGES|POSITIVE|PROBLEM|TWO-PART)\b.*$/i,'').trim();
-   return {id:i+1,title,pages:ids,source:key};
-  });
+ units.articles=Array.from({length:61},(_,i)=>map.get(i+1)||{id:i+1,title:'Article '+(i+1),pages:[],source:'articles'});
+}
+function otherUnits(key){
+ const first=key==='essays'?4:5;
+ units[key]=Array.from({length:61},(_,i)=>{
+  const n=i+1,ids=[first+3*i,first+3*i+1,first+3*i+2],p=(sources[key]||[]).find(x=>x.p===ids[0]);
+  const lines=(p?.text||'').split('\\n').map(x=>x.trim()).filter(Boolean);
+  const number=String(n).padStart(2,'0');
+  const found=key==='essays'?lines.find(x=>x.startsWith(number+' ')):lines.find(x=>x.endsWith(number)&&!x.startsWith('UNIT'));
+  return {id:n,title:(found||key+' '+n).replace(new RegExp('^'+number+'\\\\s*'),'').replace(new RegExp(number+'$'),'').trim(),pages:ids,source:key};
+ });
+}
+async function loadCategory(key){
+ if(key==='task1'){sources.task1=[];units.task1=[{id:1,title:'Task 1 · Source material not supplied',pages:[]}];render();return}
+ if(loaded[key]){render();return}
+ const version=++loadToken;
+ const total=CHUNKS[key]||0;
+ $('#viewer').innerHTML='<h2>Loading '+esc(NAMES[key])+'…</h2><p>Materiallar yuklanmoqda: '+total+' ta bo‘lak.</p>';
+ $('#items').innerHTML='<p class="sub">Loading…</p>';
+ const jobs=Array.from({length:total},(_,i)=>{
+  const url='data/'+key+'-'+String(i).padStart(2,'0')+'.json';
+  return fetch(url,{cache:'no-cache'}).then(r=>{if(!r.ok)throw Error(url+' — HTTP '+r.status);return r.json()});
+ });
+ const results=await Promise.allSettled(jobs);
+ const missing=results.map((r,i)=>r.status==='rejected'?i:null).filter(i=>i!==null);
+ sources[key]=results.flatMap(x=>x.status==='fulfilled'?x.value:[]);
+ if(key==='articles')articleUnits();
+ if(key==='essays'||key==='podcasts')otherUnits(key);
+ loaded[key]=missing.length===0;
+ if(category!==key||version!==loadToken)return;
+ if(missing.length){
+  $('#viewer').innerHTML='<h2>Materiallarni yuklashda xato</h2><p>'+missing.map(i=>'Part '+i).join(', ')+' yuklanmadi.</p><button class="btn" id="retryLibrary">↻ Retry</button>';
+  $('#items').innerHTML='<p class="sub">Some files failed to load.</p>';
+  return;
  }
- units.task1=[{id:1,title:'Task 1 · Source material not supplied',pages:[]}];
- articleKeys=PRESET_ARTICLE_KEYS
- podcastKeys=PRESET_PODCAST_KEYS
  render();
 }
+async function boot(){
+ articleKeys=PRESET_ARTICLE_KEYS;
+ podcastKeys=PRESET_PODCAST_KEYS;
+ renderTabs();
+ await loadCategory(category);
+}
+function renderTabs(){
+ $('#tabs').innerHTML=Object.keys(NAMES).map(k=>'<button class="tab '+(k===category?'active':'')+'" data-section="'+k+'">'+NAMES[k]+'</button>').join('');
+}
 function group(){if(['articles','essays','podcasts','task1'].includes(category))return (units[category]||[]).map((x)=>({...x,pages:x.pages||[]}));if(category==='examiner')return sources.examiner.filter(p=>p.p>=6).map(p=>({id:p.p,title:'Examiner Essay — page '+p.p,pages:[p.p]}));return [{id:1,title:'Crime and Punishment',pages:[3,4,5,6,7]},{id:2,title:'Media and Advertising',pages:[8,9,10,11,12,13]},{id:3,title:'The Environment',pages:[14,15,16,17,18,19]},{id:4,title:'Business and Money',pages:[20,21,22,23,24]},{id:5,title:'Government',pages:[25,26,27,28,29]},{id:6,title:'Sport and Exercise',pages:[30,31,32,33,34]},{id:7,title:'Space Exploration',pages:[35,36,37,38]}]}
-function render(){const tabs=Object.keys(NAMES);$('#tabs').innerHTML=tabs.map(k=>'<button class="tab '+(k===category?'active':'')+'" data-section="'+k+'">'+NAMES[k]+'</button>').join('');renderList();renderUnit();renderVocab()}
+function render(){renderTabs();renderList();renderUnit();renderVocab()}
 function renderList(){let q=$('#search').value.toLowerCase();let g=group().filter(x=>(x.id+' '+x.title).toLowerCase().includes(q));$('#items').innerHTML=g.map(x=>'<button class="item '+(x.id===selected?'sel':'')+'" data-item="'+x.id+'"><small>'+String(x.id).padStart(2,'0')+' · '+(x.pages||[]).length+' page(s)</small>'+esc(x.title)+'</button>').join('')||'<p class="sub">Nothing found</p>'}
 function renderUnit(){const unit=group().find(x=>x.id===selected)||group()[0];if(!unit){$('#viewer').innerHTML='<p>No units found.</p>';return}selected=unit.id;const data=sources[category]||[];let pages=(unit.pages||[]).map(p=>data.find(z=>z.p===p)).filter(Boolean);const links=category==='podcasts'&&PODCAST_LINKS[selected]?[PODCAST_LINKS[selected]]:[...new Set(pages.flatMap(p=>p.links||[]))];let text=pages.map(p=>'<div class="page"><span class="num">ORIGINAL PDF PAGE '+p.p+'</span><div class="readtext" data-page="'+p.p+'">'+markedText(p)+'</div></div>').join('');let special='';if(category==='podcasts'){
  let key=podcastKeys[selected]||{};
@@ -84,7 +102,7 @@ function persist(){localStorage.setItem('wordrush.article.vocab.v1',JSON.stringi
 function renderVocab(){$('#vocabPanel').innerHTML='<div class="toolbar"><h2>Articles Vocab <small class="frost">'+vocabulary.length+' saved</small></h2><button id="printVocab">⎙ Export PDF</button><button id="exportJSON">↧ Backup JSON</button></div>'+(vocabulary.length?vocabulary.map((v,i)=>'<div class="word"><div><strong>'+esc(v.w)+'</strong><small class="frost"> · '+esc(v.source)+' #'+v.unit+'</small><input data-meaning="'+i+'" placeholder="O‘zbekcha tarjima..." value="'+esc(v.meaning)+'" style="display:block;width:100%;border:0;border-bottom:1px solid #cbd6c8;padding:6px;margin-top:4px"></div><button data-delete="'+i+'">✕</button></div>').join(''):'<p class="empty">Select any word or phrase in Articles, then choose “Save selected phrase”.</p>')}
 function printableVocab(){const html='<html><head><meta charset="utf-8"><title>WORDRUSH Articles Vocabulary</title><style>body{font:15px/1.5 Arial;margin:35px}h1{color:#164e35}table{border-collapse:collapse;width:100%}td,th{border:1px solid #aaa;padding:10px;text-align:left}</style></head><body><h1>WORDRUSH — Articles Vocab</h1><p>'+vocabulary.length+' saved items</p><table><tr><th>Phrase</th><th>O‘zbekcha</th><th>Source</th></tr>'+vocabulary.map(v=>'<tr><td>'+esc(v.w)+'</td><td>'+esc(v.meaning)+'</td><td>'+esc(v.source)+' #'+v.unit+'</td></tr>').join('')+'</table></body></html>';const w=window.open('','_blank');if(!w)return flash('Popup ruxsat bering');w.document.write(html);w.document.close();setTimeout(()=>w.print(),300)}
 function download(data,name,mime){const b=new Blob([data],{type:mime});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-document.addEventListener('click',e=>{const t=e.target.closest('[data-section],[data-item],[data-delete],#highlight,#saveSelection,#print,#printVocab,#exportJSON,#checkArticle,#checkPodcast');if(!t)return;if(t.dataset.section){category=t.dataset.section;selected=1;history.replaceState(null,'','#'+category);render()}else if(t.dataset.item){selected=+t.dataset.item;renderList();renderUnit();window.scrollTo(0,0)}else if(t.dataset.delete){vocabulary.splice(+t.dataset.delete,1);persist();renderVocab()}else if(t.id==='highlight'){highlight=!highlight;renderUnit()}else if(t.id==='saveSelection'){saveWord(String(window.getSelection()))}else if(t.id==='print'){window.print()}else if(t.id==='checkPodcast'){const key=podcastKeys[selected]||{};let correct=0,attempted=0;document.querySelectorAll('.podanswer').forEach(input=>{const val=input.value.trim(),f=document.querySelector('[data-pfeedback="'+input.dataset.no+'"]');if(!val){f.textContent='';return}attempted++;const clean=x=>String(x).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();const ok=String(key[input.dataset.no]||'').split(' / ').some(z=>clean(z)===clean(val));if(ok)correct++;f.textContent=ok?'✓ Correct':'✗ Check again';f.style.color=ok?'#26713d':'#b54a31'});$('#podResult').textContent='Checked '+attempted+' entered answers: '+correct+' correct; unanswered questions not checked.';}else if(t.id==='checkArticle'){const key=articleKeys[selected];let correct=0,attempted=0;document.querySelectorAll('.answer').forEach(input=>{const val=input.value.trim();const f=document.querySelector('[data-feedback="'+input.dataset.task+'-'+input.dataset.no+'"]');if(!val){f.textContent='';return}attempted++;const ans=key[input.dataset.task][input.dataset.no];const clean=x=>String(x).toLowerCase().replace(/[‘’]/g,"'").replace(/[^a-z0-9]+/g,' ').trim();const choices=String(ans).split(' / ');const ok=choices.some(v=>clean(v)===clean(val));if(ok)correct++;f.textContent=ok?'✓ Correct':'✗ Check again';f.style.color=ok?'#26713d':'#b54a31'});$('#checkResult').textContent='Checked only '+attempted+' selected answers: '+correct+' correct. Unanswered questions were not checked.';}else if(t.id==='printVocab'){printableVocab()}else if(t.id==='exportJSON'){download(JSON.stringify(vocabulary,null,2),'wordrush-articles-vocab.json','application/json')}});
+document.addEventListener('click',e=>{const t=e.target.closest('[data-section],[data-item],[data-delete],#highlight,#saveSelection,#print,#printVocab,#exportJSON,#checkArticle,#checkPodcast,#retryLibrary');if(!t)return;if(t.id==='retryLibrary'){loaded[category]=false;loadCategory(category);return}if(t.dataset.section){category=t.dataset.section;selected=1;history.replaceState(null,'','#'+category);renderTabs();loadCategory(category)}else if(t.dataset.item){selected=+t.dataset.item;renderList();renderUnit();window.scrollTo(0,0)}else if(t.dataset.delete){vocabulary.splice(+t.dataset.delete,1);persist();renderVocab()}else if(t.id==='highlight'){highlight=!highlight;renderUnit()}else if(t.id==='saveSelection'){saveWord(String(window.getSelection()))}else if(t.id==='print'){window.print()}else if(t.id==='checkPodcast'){const key=podcastKeys[selected]||{};let correct=0,attempted=0;document.querySelectorAll('.podanswer').forEach(input=>{const val=input.value.trim(),f=document.querySelector('[data-pfeedback="'+input.dataset.no+'"]');if(!val){f.textContent='';return}attempted++;const clean=x=>String(x).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();const ok=String(key[input.dataset.no]||'').split(' / ').some(z=>clean(z)===clean(val));if(ok)correct++;f.textContent=ok?'✓ Correct':'✗ Check again';f.style.color=ok?'#26713d':'#b54a31'});$('#podResult').textContent='Checked '+attempted+' entered answers: '+correct+' correct; unanswered questions not checked.';}else if(t.id==='checkArticle'){const key=articleKeys[selected];let correct=0,attempted=0;document.querySelectorAll('.answer').forEach(input=>{const val=input.value.trim();const f=document.querySelector('[data-feedback="'+input.dataset.task+'-'+input.dataset.no+'"]');if(!val){f.textContent='';return}attempted++;const ans=key[input.dataset.task][input.dataset.no];const clean=x=>String(x).toLowerCase().replace(/[‘’]/g,"'").replace(/[^a-z0-9]+/g,' ').trim();const choices=String(ans).split(' / ');const ok=choices.some(v=>clean(v)===clean(val));if(ok)correct++;f.textContent=ok?'✓ Correct':'✗ Check again';f.style.color=ok?'#26713d':'#b54a31'});$('#checkResult').textContent='Checked only '+attempted+' selected answers: '+correct+' correct. Unanswered questions were not checked.';}else if(t.id==='printVocab'){printableVocab()}else if(t.id==='exportJSON'){download(JSON.stringify(vocabulary,null,2),'wordrush-articles-vocab.json','application/json')}});
 document.addEventListener('dblclick',e=>{if(e.target.closest('.readtext')){const w=String(window.getSelection()).trim();if(w)saveWord(w)}});
 document.addEventListener('mouseup',e=>{if(!highlight)return;const sel=window.getSelection();if(!sel||sel.isCollapsed||!e.target.closest('.readtext'))return;try{const r=sel.getRangeAt(0),s=String(sel).trim();if(!s||s.length>300)return;const mark=document.createElement('mark');r.surroundContents(mark);savedHighlights.push({source:category,p:Number(e.target.closest('.readtext').dataset.page),word:s});localStorage.setItem('wordrush.highlights.v1',JSON.stringify(savedHighlights));sel.removeAllRanges()}catch{flash('Bitta so‘z yoki bitta oddiy iborani ajrating')}});
 document.addEventListener('input',e=>{if(e.target.id==='notes'){notes[pagekey(category,selected)]=e.target.value;localStorage.setItem('wordrush.notes.v1',JSON.stringify(notes))}if(e.target.dataset.meaning!==undefined){vocabulary[+e.target.dataset.meaning].meaning=e.target.value;persist()}});
