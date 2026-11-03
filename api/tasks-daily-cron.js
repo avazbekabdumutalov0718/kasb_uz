@@ -1,6 +1,8 @@
+import { runHourly } from '../lib/hourly-reminders.js';
 import {bridge,tg,titles} from './_tasks-kit.js';
 export const config={maxDuration:60};
 export async function GET(req){
+ if(req.headers.get('x-wordrush-scheduler'))return runHourly(req);
  if(req.headers.get('authorization')!=='Bearer '+process.env.CRON_SECRET)return Response.json({error:'Forbidden'},{status:403});
  const channelId=process.env.WORDRUSH_CHANNEL_ID;
  if(!channelId)return Response.json({error:'WORDRUSH_CHANNEL_ID not configured'},{status:503});
