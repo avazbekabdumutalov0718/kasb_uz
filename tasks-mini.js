@@ -19,6 +19,8 @@ const fmtDate=d=>{
  return p.year+'-'+p.month+'-'+p.day;
 };
 const today=()=>fmtDate(new Date());
+const trialReading=$('#readingLabTrial');if(trialReading){trialReading.hidden=today()!=='2026-11-03';trialReading.style.display=trialReading.hidden?'none':'block';}
+
 const isoOffset=(iso,n)=>{const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const shortDate=iso=>{const d=new Date(iso+'T12:00:00Z');return new Intl.DateTimeFormat('uz-UZ',{day:'numeric',month:'short',timeZone:'UTC'}).format(d)};
 function readStats(){
