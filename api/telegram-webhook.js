@@ -36,8 +36,10 @@ export async function GET(req) {
   try{
    const before=await tg('getWebhookInfo',{});
    const updated=await tg('setWebhook',{url:site+'api/telegram-webhook',secret_token:process.env.TELEGRAM_WEBHOOK_SECRET,drop_pending_updates:false});
+   const menuUpdated=await tg('setChatMenuButton',{menu_button:{type:'web_app',text:'WORDRUSH Mini App',web_app:{url:site+'tasks.html?miniapp=1'}}});
+   const commandsUpdated=await tg('setMyCommands',{commands:[{command:'start',description:'WORDRUSH Mini App va random reading'},{command:'reading',description:'Bugungi random article va audio'},{command:'tasks',description:'Homework Tracker'},{command:'app',description:'Android TASKS kirish havolasi'}]});
    const after=await tg('getWebhookInfo',{});
-   return response({ok:updated===true,oldUrl:before.url,newUrl:after.url,pending:after.pending_update_count,lastError:after.last_error_message||null});
+   return response({ok:updated===true,oldUrl:before.url,newUrl:after.url,pending:after.pending_update_count,menuUpdated,commandsUpdated,lastError:after.last_error_message||null});
   }catch(e){return response({error:String(e.message||e)},503)}
  }
  if(url.searchParams.get('audio')!=='readinglab')return response({status:'running',mode:'webhook'},200);
