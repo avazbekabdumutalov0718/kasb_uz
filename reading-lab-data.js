@@ -31,7 +31,7 @@ export const passages=[
   choices:['Inedible plants','Only expensive equipment','Nearby universities'],correct:0,
   blank:'Explorers should pack ____ provisions.',blankTerm:'digestible'},
  {title:'Preventing Fatigue Behind the Wheel',
-  text:'In the face of chronic drowsiness, drivers could drift off without warning. Take your lead from safety specialists: rest regularly, choose digestible meals, avoid inedible products, and monitor fatigue very carefully.',
+  text:'In the face of chronic drowsiness, drivers could drift off without warning. Take your lead from safety specialists: rest regularly, choose digestible meals, avoid inedible products, and monitor fatigue carefully.',
   question:'What is the main safety advice?',
   choices:['Ignore exhaustion','Monitor fatigue and rest regularly','Drive for longer hours'],correct:1,
   blank:'Drivers may ____ without warning.',blankTerm:'drift off'}
