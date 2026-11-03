@@ -57,10 +57,10 @@ h2{font-size:1.14rem;margin:0 0 12px;letter-spacing:-.02em}
 <p class="muted">Har bir maqolada belgilangan 6 ta vocabulary qatnashadi. Belgilangan so‘z ustiga bosib tarjimasini ko‘rishingiz mumkin.</p><nav class="tabs" id="tabs" aria-label="Articles"></nav></section>
 <section class="box" id="reading"><div class="row"><div><div class="muted" id="articleNum"></div><h2 id="articleTitle"></h2></div><span class="mini" style="background:#f2ebdf;color:#764b21" id="wordCounter">30 words</span></div>
 <p class="reader" id="articleText"></p>
-<div class="row"><button id="readAloud" type="button" class="btn">🔊 Listen to article</button><button id="nextArticle" type="button" class="btn alt">Next article →</button></div></section>
-<section class="box" id="flashcards"><div class="row"><h2>Flashcards + Audio</h2><span class="muted">6 ta ibora · kartani bosib tarjimasini oching</span></div><div id="cards" class="cards"></div></section>
+<div class="row"><button id="readAloud" type="button" class="btn">▶ Play article</button><button id="nextArticle" type="button" class="btn alt">Next article →</button></div><audio id="articleAudio" controls preload="none" style="width:100%;margin-top:14px" aria-label="Article audio"></audio><p id="articleAudioStatus" class="muted" role="status"></p></section>
+<section class="box" id="flashcards"><div class="row"><h2>Flashcards + Audio</h2><span class="muted">6 ta ibora · kartani bosib tarjimasini oching</span></div><div id="cards" class="cards"></div><div style="padding-top:12px"><audio id="wordAudio" controls preload="none" style="width:100%" aria-label="Vocabulary audio"></audio><p id="wordAudioStatus" class="muted" role="status">🔊 So‘z ustidagi Pronunciation tugmasini bosing.</p></div></section>
 <section class="box" id="quiz"><h2>Article Quiz</h2><p class="muted">Har maqola uchun 3 xil savol: Meaning · Fill in the gap · Reading comprehension.</p><div id="questions"></div>
 <div class="row"><button id="check" class="btn" type="button">✓ Check answers</button><span class="muted" id="score"></span></div></section>
 <section class="box"><div class="row"><a class="btn alt" href="./tasks.html?miniapp=1">← Homework TASKS</a><button class="btn alt" id="shuffle" type="button">🎲 Another article</button></div></section>
 </div><footer class="foot">WORDRUSH · 6 vocabulary · 5 × 30 words · temporary demo</footer>
-</div><script type="module" src="./reading-lab.js?v=20261103"></script></body></html>
+</div><script type="module" src="./reading-lab.js?v=20261103-mp3"></script></body></html>
