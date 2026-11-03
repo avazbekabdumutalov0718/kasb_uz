@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827">
+<title>WORDRUSH · Advanced Reading Lab</title>
+<script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#202436;background:#f6f4f0}
+*{box-sizing:border-box}body{margin:0}button{font:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}.wrap{max-width:920px;margin:auto;padding:18px 16px 80px}
+.head{border-radius:22px;background:linear-gradient(117deg,#19223c,#512d58 60%,#ba582c);color:#fff;padding:21px 24px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-weight:900;font-size:1.24rem;letter-spacing:.04em}
+.mini{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:5px 11px;font-size:.76rem}
+h1{font-size:clamp(1.6rem,5vw,2.4rem);line-height:1.13;margin:20px 0 10px;letter-spacing:-.04em}
+.head p{color:#e9dee9;line-height:1.6;margin:0}
+.stats{display:flex;gap:9px;margin:20px 0 0;flex-wrap:wrap}.stats span{border-radius:10px;background:rgba(255,255,255,.13);padding:9px 12px;font-size:.83rem}
+.box{background:white;border:1px solid #e8e6e5;border-radius:19px;padding:20px;margin-top:16px;box-shadow:0 4px 20px rgba(11,18,31,.04)}
+h2{font-size:1.14rem;margin:0 0 12px;letter-spacing:-.02em}
+.muted{color:#707383;font-size:.87rem;line-height:1.55}
+.tabs{display:flex;gap:9px;overflow-x:auto;padding:3px 0 9px}
+.tab{border:1px solid #d7d7db;border-radius:12px;padding:11px 15px;white-space:nowrap;background:#f8f8fa;color:#333;font-weight:700}
+.tab.active{background:#24283f;color:white;border-color:#24283f}
+.reader{font:400 clamp(1.15rem,3vw,1.38rem)/1.95 Georgia,serif;margin:20px 0;color:#23283e}
+.term{background:#fff1d3;border-bottom:2px solid #d49a39;border-radius:3px;padding:0 2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.btn{border:0;border-radius:11px;background:#24283f;color:#fff;padding:11px 15px;font-size:.91rem;font-weight:700}
+.btn.alt{background:#fff;border:1px solid #d7d7df;color:#26293a}
+.btn:disabled{opacity:.5;cursor:default}
+.progress{height:8px;border-radius:99px;background:#edeef3;overflow:hidden;margin:11px 0}
+.progress span{display:block;background:#bb642f;height:100%;transition:width .2s}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:10px}
+.flash{min-height:155px;position:relative;border:1px solid #dddde3;background:#fbfbfe;border-radius:15px;padding:16px}
+.term-front{font-size:1.15rem;font-weight:850;margin:4px 0 7px}
+.uz{font-weight:700;color:#a55427}
+.small{font-size:.83rem;line-height:1.55;color:#626674}
+.listen{border:1px solid #dfdfe8;background:white;border-radius:9px;padding:6px 9px;color:#292d47;margin-top:9px;font-size:.8rem}
+.quiz-question{border:1px solid #eeeef2;border-radius:14px;padding:14px;margin-bottom:12px}
+.quiz-question legend{font-weight:750;line-height:1.5;padding:0 5px}
+.option{display:block;padding:8px 10px;background:#f7f7f9;border-radius:8px;margin:7px 0;font-size:.91rem}
+.option input{margin-right:8px}
+.answer{font-size:.9rem;font-weight:700;padding-top:8px}
+.correct{color:#137548}.incorrect{color:#b33b38}
+.foot{padding:20px 0;text-align:center;color:#747688;font-size:.82rem}
+#expired{display:none}
+@media(max-width:520px){.wrap{padding:12px 11px 70px}.box{padding:15px}.head{padding:18px}.row button{flex:1}}
+</style>
+</head>
+<body><div class="wrap">
+<header class="head"><div class="top"><span class="brand">W↗ WORDRUSH</span><span class="mini">03 NOV · 1 DAY TRIAL</span></div>
+<h1>Advanced Reading Lab</h1><p>Har safar ochganingizda tasodifiy maqola. Har birida 6 ta yangi ibora, flashcard, audio talaffuz va quiz.</p>
+<div class="stats"><span>📄 5 articles</span><span>🔢 30 words each</span><span>🧠 6 key expressions</span><span>🔊 Audio flashcards</span></div></header>
+<section id="expired" class="box"><h2>Sinov muddati tugadi</h2><p>Bu bo‘lim faqat 2026-yil 3-noyabr kuni test uchun faollashtirilgan edi.</p><a class="btn" href="./tasks.html?miniapp=1">TASKS’ga qaytish</a></section>
+<div id="lab">
+<section class="box"><div class="row"><h2>Bugungi reading pack</h2><button id="random" class="btn alt" type="button">🎲 Random article</button></div>
+<p class="muted">Har bir maqolada belgilangan 6 ta vocabulary qatnashadi. Belgilangan so‘z ustiga bosib tarjimasini ko‘rishingiz mumkin.</p><nav class="tabs" id="tabs" aria-label="Articles"></nav></section>
+<section class="box" id="reading"><div class="row"><div><div class="muted" id="articleNum"></div><h2 id="articleTitle"></h2></div><span class="mini" style="background:#f2ebdf;color:#764b21" id="wordCounter">30 words</span></div>
+<p class="reader" id="articleText"></p>
+<div class="row"><button id="readAloud" type="button" class="btn">🔊 Listen to article</button><button id="nextArticle" type="button" class="btn alt">Next article →</button></div></section>
+<section class="box" id="flashcards"><div class="row"><h2>Flashcards + Audio</h2><span class="muted">6 ta ibora · kartani bosib tarjimasini oching</span></div><div id="cards" class="cards"></div></section>
+<section class="box" id="quiz"><h2>Article Quiz</h2><p class="muted">Har maqola uchun 3 xil savol: Meaning · Fill in the gap · Reading comprehension.</p><div id="questions"></div>
+<div class="row"><button id="check" class="btn" type="button">✓ Check answers</button><span class="muted" id="score"></span></div></section>
+<section class="box"><div class="row"><a class="btn alt" href="./tasks.html?miniapp=1">← Homework TASKS</a><button class="btn alt" id="shuffle" type="button">🎲 Another article</button></div></section>
+</div><footer class="foot">WORDRUSH · 6 vocabulary · 5 × 30 words · temporary demo</footer>
+</div><script type="module" src="./reading-lab.js?v=20261103"></script></body></html>
