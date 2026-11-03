@@ -2,11 +2,22 @@ import {trialDay,vocabulary,passages,vocabularyCheck} from './reading-lab-data.j
 const $=q=>document.querySelector(q);
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today=()=>{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tashkent',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const x=Object.fromEntries(p.map(z=>[z.type,z.value]));return x.year+'-'+x.month+'-'+x.day};
-function speak(s){
- if(!window.speechSynthesis){alert('Audio talaffuz bu qurilmada mavjud emas. Chrome orqali oching.');return}
- try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(s);u.lang='en-US';u.rate=.88;speechSynthesis.speak(u)}
- catch(e){alert('Audio xatosi: '+e.message)}
+// Native HTML5 audio works in Telegram's Android WebView without Web Speech API.
+function speak(kind,index){
+ const id=kind==='word'?'wordAudio':'articleAudio';
+ const audio=$('#'+id);
+ const status=$('#'+id+'Status');
+ if(!audio)return;
+ const next='/api/telegram-webhook?audio=readinglab&kind='+kind+'&id='+index;
+ if(audio.getAttribute('src')!==next){audio.pause();audio.src=next;audio.load()}
+ status.textContent=kind==='word'?'🔊 Flashcard talaffuzi':'🔊 Article audio';
+ status.className='muted';
+ const played=audio.play();
+ if(played&&typeof played.catch==='function')played.catch(()=>{
+  status.textContent='Audio avtomatik boshlanmadi. Quyidagi ▶ tugmasini bosing.';
+ });
 }
+
 const wanted=Number(new URLSearchParams(location.search).get('article'));
 let current=(Number.isInteger(wanted)&&wanted>=1&&wanted<=5)?wanted-1:Math.floor(Math.random()*5);
 let openCards=new Set();
@@ -45,19 +56,22 @@ function render(i){
  $('#articleText').innerHTML=markTerms(p.text);
  $('#wordCounter').textContent=p.text.trim().split(/\s+/).length+' words';
  cards();quiz();
+ for(const id of ['articleAudio','wordAudio']){const a=$('#'+id);if(a){a.pause();a.removeAttribute('src');a.load()}}
+ for(const id of ['articleAudioStatus','wordAudioStatus']){const e=$('#'+id);if(e)e.textContent=''}
  try{history.replaceState(null,'',location.pathname+'?article='+(current+1)+'&miniapp=1')}catch{}
 }
 function shuffle(){let i=Math.floor(Math.random()*4);if(i>=current)i++;render(i);$('#reading').scrollIntoView({behavior:'smooth'})}
 $('#tabs').addEventListener('click',e=>{const b=e.target.closest('[data-index]');if(b)render(Number(b.dataset.index))});
 $('#cards').addEventListener('click',e=>{
- const play=e.target.closest('[data-speak]');if(play){e.stopPropagation();speak(vocabulary[Number(play.dataset.speak)].term);return}
+ const play=e.target.closest('[data-speak]');if(play){e.stopPropagation();speak('word',Number(play.dataset.speak));return}
  const node=e.target.closest('[data-card]');if(!node)return;const id=Number(node.dataset.card);
  openCards.has(id)?openCards.delete(id):openCards.add(id);cards();
 });
 $('#cards').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-card]')){e.preventDefault();e.target.click()}});
 $('#articleText').addEventListener('click',e=>{const t=e.target.closest('[data-term]');if(!t)return;const i=vocabulary.findIndex(v=>v.term===t.dataset.term);if(i<0)return;openCards.add(i);cards();$('#flashcards').scrollIntoView({behavior:'smooth'})});
 $('#articleText').addEventListener('keydown',e=>{if(e.key==='Enter')e.target.click()});
-$('#readAloud').addEventListener('click',()=>speak(passages[current].text));
+for(const name of ['word','article']){const a=$('#'+name+'Audio'),status=$('#'+name+'AudioStatus');if(a){a.addEventListener('error',()=>{status.textContent='Audio yuklanmadi. Internetni tekshirib qayta urining.';status.className='answer incorrect'});a.addEventListener('playing',()=>{status.textContent='▶ Audio ijro etilmoqda';status.className='answer correct'})}}
+$('#readAloud').addEventListener('click',()=>speak('article',current));
 $('#random').addEventListener('click',shuffle);
 $('#shuffle').addEventListener('click',shuffle);
 $('#nextArticle').addEventListener('click',()=>{render(current+1);$('#reading').scrollIntoView({behavior:'smooth'})});
