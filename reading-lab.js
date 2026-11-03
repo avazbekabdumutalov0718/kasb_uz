@@ -87,6 +87,5 @@ $('#check').addEventListener('click',()=>{
  $('#score').textContent='Natija: '+correct+'/'+answered+' · faqat tanlangan javoblar';
  try{localStorage.setItem('wr-reading-trial-'+current,JSON.stringify({correct,answered}))}catch{}
 });
-if(today()!==trialDay){$('#lab').hidden=true;$('#expired').style.display='block'}
-else if(!vocabularyCheck()){$('#lab').innerHTML='<section class="box">Article validation error.</section>'}
+if(!vocabularyCheck()){$('#lab').innerHTML='<section class="box">Article validation error.</section>'}
 else {render(current);try{window.Telegram?.WebApp?.ready();window.Telegram?.WebApp?.expand()}catch{}}
