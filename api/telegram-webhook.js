@@ -14,16 +14,16 @@ if(msg.forward_origin?.type==='channel'&&msg.forward_origin.chat?.id){
  return response({ok:true});
 }
 const cmd=String(msg.text||'').split(' ')[0].split('@')[0];try{if(cmd==='/sayt')await tg('sendMessage',{chat_id:chat,text:site});else if(cmd==='/reading'||cmd==='/article'||cmd==='/start'){
- const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tashkent',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
- const date=Object.fromEntries(p.map(z=>[z.type,z.value]));const localDate=date.year+'-'+date.month+'-'+date.day;
+ const i=Math.floor(Math.random()*passages.length),article=passages[i];
  const link=site+'tasks.html?miniapp=1';
- if(localDate===trialDay){
-  const i=Math.floor(Math.random()*passages.length),article=passages[i];
-  await tg('sendMessage',{chat_id:chat,text:'📚 WORDRUSH · ADVANCED READING\n\n🎲 Random article '+(i+1)+'/5\n'+article.title+'\n\n'+article.text+'\n\n🔤 6 ta expression · 30 words\n🎧 Audio flashcards + 3 quiz\n\nSinov faqat bugun: 03.11.2026.',
-   reply_markup:{inline_keyboard:[[{text:'📖 O‘qish + Quiz + Audio',web_app:{url:site+'reading-lab.html?article='+(i+1)+'&miniapp=1'}}],[{text:'☑ TASKS ga kirish',web_app:{url:link}}],[{text:'🌐 WORDRUSH',url:site}]]}});
- }else{
-  await tg('sendMessage',{chat_id:chat,text:'📋 WORDRUSH Homework Tracker\n\nAdvanced Reading Lab sinovi yakunlangan.',reply_markup:{inline_keyboard:[[{text:'📋 Vazifalar',web_app:{url:link}}],[{text:'🌐 Sayt',url:site}]]}});
- }
+ await tg('sendMessage',{chat_id:chat,
+  text:'📚 WORDRUSH · ADVANCED READING\n\n🎲 Random article '+(i+1)+'/5\n'+article.title+'\n\n'+article.text+'\n\n🔤 6 ta expression · 30 words\n🎧 Audio flashcards + 3 quiz\n\nSinov: 6 ta so‘z · 5 ta article.',
+  reply_markup:{inline_keyboard:[
+   [{text:'📖 O‘qish + Quiz + Audio',web_app:{url:site+'reading-lab.html?article='+(i+1)+'&miniapp=1'}}],
+   [{text:'☑ TASKS ga kirish',web_app:{url:link}}],
+   [{text:'🌐 WORDRUSH',url:site}]
+  ]}
+ });
 }else if(cmd==='/tasks'){const link=site+'tasks.html?miniapp=1';await tg('sendMessage',{chat_id:chat,text:'☑ Homework Tracker — TASKS',reply_markup:{inline_keyboard:[[{text:'📋 Vazifalar',web_app:{url:link}}],[{text:'🌐 Sayt',url:site}]]}})}else if(cmd==='/app'){const ticket=sign(chat,'session',600);const link=site+'tasks.html?session='+encodeURIComponent(ticket);await tg('sendMessage',{chat_id:chat,text:'📱 WORDRUSH Android uchun kirish havolasi (10 daqiqa amal qiladi):\n\n'+link+'\n\nHavolani nusxalang va ilovadagi Bot TASKS → KIRISH oynasiga qo‘ying.',disable_web_page_preview:true})}else if(cmd==='/login'){const ticket=sign(chat);await tg('sendMessage',{chat_id:chat,text:'🔐 WORDRUSH TASKS saytda ham ochish:',reply_markup:{inline_keyboard:[[{text:'TASKS saytga kirish',url:site+'tasks.html?session='+encodeURIComponent(ticket)}]]}})}else if(cmd.startsWith('/channel')){const parts=String(msg.text||'').trim().split(/\s+/);if(parts[1]&&/^(@[\w]{5,}|-100\d{6,})$/.test(parts[1])){await tg('getChat',{chat_id:parts[1]});await save(cfgPath(chat),{channelId:parts[1]});await tg('sendMessage',{chat_id:chat,text:'✅ Kanal ulandi. Botga post yuborish huquqini bering.'})}}}catch(e){console.error('Bot webhook error:',e.message);return response({error:'Telegram delivery failed'},500)}return response({ok:true})}
 
 
