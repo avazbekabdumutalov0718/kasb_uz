@@ -19,14 +19,6 @@ const fmtDate=d=>{
  return p.year+'-'+p.month+'-'+p.day;
 };
 const today=()=>fmtDate(new Date());
-const isTrialDay=today()==='2026-11-03';
-if(isTrialDay && params.get('skipReading')!=='1' && !sessionStorage.getItem('wr-readinglab-redirect-bypass')){
- // Opening TASKS inside Telegram begins with one randomized Reading Lab lesson.
- // Returning with skipReading=1 opens the actual homework list immediately.
- location.replace('./reading-lab.html?miniapp=1&article='+(1+Math.floor(Math.random()*5)));
- return;
-}
-
 const trialReading=$('#readingLabTrial');if(trialReading){trialReading.hidden=today()!=='2026-11-03';trialReading.style.display=trialReading.hidden?'none':'block';}
 
 const isoOffset=(iso,n)=>{const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
