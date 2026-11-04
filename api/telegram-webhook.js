@@ -49,20 +49,57 @@ export async function GET(req) {
  if(kind==='word'&&id<vocabulary.length)text=vocabulary[id].term;
  else if(kind==='article'&&id<passages.length)text=passages[id].text;
  else return response({error:'Audio item not found'},404);
- const endpoints=[
-  'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q='+encodeURIComponent(text),
-  'https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=en&q='+encodeURIComponent(text)
- ];
- for(const endpoint of endpoints){
-  try{
-   const r=await fetch(endpoint,{headers:{'Accept':'audio/mpeg,audio/*;q=0.9','User-Agent':'Mozilla/5.0 (compatible; WORDRUSH/1.0)'},signal:AbortSignal.timeout(9000)});
-   if(!r.ok)continue;
-   const mime=r.headers.get('content-type')||'';
-   if(!/audio|mpeg|octet-stream/i.test(mime))continue;
-   const bytes=await r.arrayBuffer();
-   if(bytes.byteLength<500||bytes.byteLength>1800000)continue;
-   return new Response(bytes,{status:200,headers:{'Content-Type':'audio/mpeg','Cache-Control':'public, max-age=86400, s-maxage=604800','Content-Length':String(bytes.byteLength),'X-Content-Type-Options':'nosniff'}});
-  }catch(e){console.warn('Reading audio source unavailable',String(e.message||e).slice(0,80))}
+ const parts=[];
+ let fragment='';
+ for(const word of text.trim().split(/\s+/)){
+  if(fragment&&fragment.length+word.length+1>145){parts.push(fragment);fragment=''}
+  fragment+=(fragment?' ':'')+word;
  }
- return response({error:'Audio source temporarily unavailable'},502);
+ if(fragment)parts.push(fragment);
+ async function getMp3(phrase){
+  const encoded=encodeURIComponent(phrase);
+  const endpoints=[
+   'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=en&q='+encoded,
+   'https://translate.googleapis.com/translate_tts?ie=UTF-8&client=gtx&tl=en&q='+encoded
+  ];
+  for(const endpoint of endpoints){
+   try{
+    const r=await fetch(endpoint,{headers:{'Accept':'audio/mpeg,audio/*;q=0.9','User-Agent':'Mozilla/5.0'},signal:AbortSignal.timeout(12000)});
+    if(!r.ok)continue;
+    const mime=r.headers.get('content-type')||'';
+    if(!/audio|mpeg|octet-stream/i.test(mime))continue;
+    const bytes=new Uint8Array(await r.arrayBuffer());
+    if(bytes.byteLength<500||bytes.byteLength>850000)continue;
+    return bytes;
+   }catch(e){console.warn('Reading audio provider unavailable',String(e?.message||e).slice(0,80))}
+  }
+  throw Error('Audio provider temporarily unavailable');
+ }
+ try{
+  const clips=await Promise.all(parts.map(getMp3));
+  const total=clips.reduce((n,a)=>n+a.length,0);
+  const full=new Uint8Array(total);let offset=0;
+  for(const clip of clips){full.set(clip,offset);offset+=clip.length}
+  const headers={
+   'Content-Type':'audio/mpeg',
+   'Cache-Control':'public, max-age=86400, s-maxage=604800',
+   'Accept-Ranges':'bytes',
+   'X-Content-Type-Options':'nosniff'
+  };
+  const range=req.headers.get('range');
+  if(range){
+   const m=/^bytes=(\d+)-(\d*)$/.exec(range.trim());
+   if(m){
+    const start=Number(m[1]);
+    const stop=m[2]?Math.min(total-1,Number(m[2])):total-1;
+    if(start>=total||stop<start)return new Response(null,{status:416,headers:{'Content-Range':'bytes */'+total}});
+    const slice=full.subarray(start,stop+1);
+    return new Response(slice,{status:206,headers:{...headers,'Content-Range':'bytes '+start+'-'+stop+'/'+total,'Content-Length':String(slice.byteLength)}});
+   }
+  }
+  return new Response(full,{status:200,headers:{...headers,'Content-Length':String(total)}});
+ }catch(e){
+  console.error('Reading Lab audio unavailable',String(e?.message||e));
+  return response({error:'Audio temporarily unavailable'},502);
+ }
 }
