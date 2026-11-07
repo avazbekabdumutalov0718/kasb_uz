@@ -1,6 +1,19 @@
 import {passages,vocabulary,trialDay} from '../reading-lab-data.js';
 import {tg,sign,save,read,cfgPath,response} from './_tasks-kit.js';
-const site='https://wordrush-chi.vercel.app/';
+import {SITE,PAGES,READING,TASKS,SAYT,APP,LOGIN,CHANNEL,MENU} from '../bot-config.js';
+const site=SITE;
+
+// Matndagi {n}, {title} kabi joylarni qiymat bilan almashtiradi
+const fill=(t,v={})=>String(t).replace(/\{(\w+)\}/g,(m,k)=>k in v?String(v[k]):m);
+// Sahifa nomidan to'liq havola yasaydi
+const pageUrl=(page,v={})=>site+fill(PAGES[page]||'',v);
+// Sozlamalardagi tugmalar ro'yxatini Telegram formatiga o'giradi (har tugma alohida qatorda)
+const keyboard=(buttons,v={})=>({inline_keyboard:buttons.map(b=>{
+ if(b.type==='webapp')return [{text:b.text,web_app:{url:pageUrl(b.page,v)}}];
+ if(b.type==='login')return [{text:b.text,url:pageUrl('login',v)}];
+ return [{text:b.text,url:b.url}];
+})});
+
 export async function POST(req){if(!process.env.TELEGRAM_BOT_TOKEN||!process.env.TELEGRAM_WEBHOOK_SECRET)return response({error:'Bot not configured'},503);if(req.headers.get('x-telegram-bot-api-secret-token')!==process.env.TELEGRAM_WEBHOOK_SECRET)return response({error:'Forbidden'},403);let b;try{b=await req.json()}catch{return response({error:'Invalid'},400)}const membership=b.my_chat_member;
 if(membership?.chat?.type==='channel'&&['administrator','creator'].includes(membership.new_chat_member?.status)&&membership.new_chat_member?.user?.is_bot){
  const admin=membership.from?.id;
@@ -10,22 +23,36 @@ if(membership?.chat?.type==='channel'&&['administrator','creator'].includes(memb
 const msg=b.message;if(!msg||msg.chat?.type!=='private')return response({ok:true});const chat=msg.chat.id;
 if(msg.forward_origin?.type==='channel'&&msg.forward_origin.chat?.id){
  await save(cfgPath(chat),{channelId:String(msg.forward_origin.chat.id)});
- await tg('sendMessage',{chat_id:chat,text:'✅ Kanal ulandi. Proof va natijalar endi shu kanalga yuboriladi.'});
+ await tg('sendMessage',{chat_id:chat,text:CHANNEL.linked});
  return response({ok:true});
 }
-const cmd=String(msg.text||'').split(' ')[0].split('@')[0];try{if(cmd==='/sayt')await tg('sendMessage',{chat_id:chat,text:site});else if(cmd==='/reading'||cmd==='/article'||cmd==='/start'){
- const i=Math.floor(Math.random()*passages.length),article=passages[i];
- const link=site+'tasks.html?miniapp=1';
- await tg('sendMessage',{chat_id:chat,
-  text:'📚 WORDRUSH · ADVANCED READING\n\n🎲 Random article '+(i+1)+'/5\n'+article.title+'\n\n'+article.text+'\n\n🔤 6 ta expression · 30 words\n🎧 Audio flashcards + 3 quiz\n\nSinov: 6 ta so‘z · 5 ta article.',
-  reply_markup:{inline_keyboard:[
-   [{text:'📖 O‘qish + Quiz + Audio',web_app:{url:site+'reading-lab.html?article='+(i+1)+'&miniapp=1'}}],
-   [{text:'☑ TASKS ga kirish',web_app:{url:link}}],
-   [{text:'🌐 WORDRUSH',url:site}]
-  ]}
- });
-}else if(cmd==='/tasks'){const link=site+'tasks.html?miniapp=1';await tg('sendMessage',{chat_id:chat,text:'☑ Homework Tracker — TASKS',reply_markup:{inline_keyboard:[[{text:'📋 Vazifalar',web_app:{url:link}}],[{text:'🌐 Sayt',url:site}]]}})}else if(cmd==='/app'){const ticket=sign(chat,'session',600);const link=site+'tasks.html?session='+encodeURIComponent(ticket);await tg('sendMessage',{chat_id:chat,text:'📱 WORDRUSH Android uchun kirish havolasi (10 daqiqa amal qiladi):\n\n'+link+'\n\nHavolani nusxalang va ilovadagi Bot TASKS → KIRISH oynasiga qo‘ying.',disable_web_page_preview:true})}else if(cmd==='/login'){const ticket=sign(chat);await tg('sendMessage',{chat_id:chat,text:'🔐 WORDRUSH TASKS saytda ham ochish:',reply_markup:{inline_keyboard:[[{text:'TASKS saytga kirish',url:site+'tasks.html?session='+encodeURIComponent(ticket)}]]}})}else if(cmd.startsWith('/channel')){const parts=String(msg.text||'').trim().split(/\s+/);if(parts[1]&&/^(@[\w]{5,}|-100\d{6,})$/.test(parts[1])){await tg('getChat',{chat_id:parts[1]});await save(cfgPath(chat),{channelId:parts[1]});await tg('sendMessage',{chat_id:chat,text:'✅ Kanal ulandi. Botga post yuborish huquqini bering.'})}}}catch(e){console.error('Bot webhook error:',e.message);return response({error:'Telegram delivery failed'},500)}return response({ok:true})}
-
+const cmd=String(msg.text||'').split(' ')[0].split('@')[0];
+try{
+ if(cmd==='/sayt'){
+  await tg('sendMessage',{chat_id:chat,text:SAYT.text});
+ }else if(READING.commands.includes(cmd)){
+  const i=Math.floor(Math.random()*passages.length),article=passages[i];
+  const v={n:i+1,total:passages.length,title:article.title,text:article.text};
+  await tg('sendMessage',{chat_id:chat,text:fill(READING.text,v),reply_markup:keyboard(READING.buttons,v)});
+ }else if(cmd==='/tasks'){
+  await tg('sendMessage',{chat_id:chat,text:TASKS.text,reply_markup:keyboard(TASKS.buttons)});
+ }else if(cmd==='/app'){
+  const ticket=sign(chat,'session',APP.ttlSeconds);
+  const link=pageUrl('login',{ticket:encodeURIComponent(ticket)});
+  await tg('sendMessage',{chat_id:chat,text:fill(APP.text,{link}),disable_web_page_preview:true});
+ }else if(cmd==='/login'){
+  const ticket=sign(chat);
+  await tg('sendMessage',{chat_id:chat,text:LOGIN.text,reply_markup:keyboard(LOGIN.buttons,{ticket:encodeURIComponent(ticket)})});
+ }else if(cmd.startsWith('/channel')){
+  const parts=String(msg.text||'').trim().split(/\s+/);
+  if(parts[1]&&/^(@[\w]{5,}|-100\d{6,})$/.test(parts[1])){
+   await tg('getChat',{chat_id:parts[1]});
+   await save(cfgPath(chat),{channelId:parts[1]});
+   await tg('sendMessage',{chat_id:chat,text:CHANNEL.linkedByCommand});
+  }
+ }
+}catch(e){console.error('Bot webhook error:',e.message);return response({error:'Telegram delivery failed'},500)}
+return response({ok:true})}
 
 // Internal health/webhook repair plus same-origin audio for Telegram Android WebView.
 // TTS requests are restricted to the 11 published Reading Lab items.
@@ -36,8 +63,8 @@ export async function GET(req) {
   try{
    const before=await tg('getWebhookInfo',{});
    const updated=await tg('setWebhook',{url:site+'api/telegram-webhook',secret_token:process.env.TELEGRAM_WEBHOOK_SECRET,drop_pending_updates:false});
-   const menuUpdated=await tg('setChatMenuButton',{menu_button:{type:'web_app',text:'WORDRUSH Mini App',web_app:{url:site+'tasks.html?miniapp=1'}}});
-   const commandsUpdated=await tg('setMyCommands',{commands:[{command:'start',description:'WORDRUSH Mini App va random reading'},{command:'reading',description:'Bugungi random article va audio'},{command:'tasks',description:'Homework Tracker'},{command:'app',description:'Android TASKS kirish havolasi'}]});
+   const menuUpdated=await tg('setChatMenuButton',{menu_button:{type:'web_app',text:MENU.buttonText,web_app:{url:pageUrl(MENU.buttonPage)}}});
+   const commandsUpdated=await tg('setMyCommands',{commands:MENU.commands});
    const after=await tg('getWebhookInfo',{});
    return response({ok:updated===true,oldUrl:before.url,newUrl:after.url,pending:after.pending_update_count,menuUpdated,commandsUpdated,lastError:after.last_error_message||null});
   }catch(e){return response({error:String(e.message||e)},503)}
