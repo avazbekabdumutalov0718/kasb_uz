@@ -59,9 +59,9 @@ function mulberry32(seed) {
 }
 
 /** Berilgan sikl uchun 0..29 indekslarining aralashmasi (har topic aniq 1 marta). */
-function shuffleForCycle(cycle) {
+function shuffleForCycle(cycleId) {
   const arr = Array.from({ length: N }, (_, i) => i);
-  const rnd = mulberry32((cycle * 10007 + 17) >>> 0);
+  const rnd = mulberry32((cycleId * 10007 + 17) >>> 0);
   for (let i = N - 1; i > 0; i--) {
     const j = Math.floor(rnd() * (i + 1));
     const tmp = arr[i];
@@ -75,19 +75,14 @@ function shuffleForCycle(cycle) {
  * Kun bo'yicha topic indeksi.
  * - Har 30 kunda barcha 30 topic aniq 1 marta.
  * - Hech qaysi topic qolib ketmaydi.
- * - Har yangi 30 kunlik blokda tartib boshqacha (random, lekin deterministik).
+ * - Har yangi 30 kunlik blokda tartib boshqacha.
  */
 export function topicIndexForDay(day) {
   const offset = daysBetween(CYCLE_START, day);
-  // CYCLE_START dan oldin ham ishlashi uchun musbat modul
-  const positive = ((offset % N) + N) % N;
-  const cycle = Math.floor(offset / N);
-  // offset manfiy bo'lsa cycle ham manfiy bo'lishi mumkin — normalize
-  const cycleNorm = offset >= 0 ? cycle : cycle - (positive === 0 && offset !== 0 ? 0 : 0);
-  // Soddaroq: floor division for negative
-  const cycleId = Math.floor((offset < 0 ? offset - (N - 1) : offset) / N);
-  const order = shuffleForCycle(cycleId);
+  // floorDiv: manfiy offset uchun ham to'g'ri ishlaydi
+  const cycleId = Math.floor(offset / N);
   const dayInCycle = ((offset % N) + N) % N;
+  const order = shuffleForCycle(cycleId);
   return order[dayInCycle];
 }
 
@@ -95,7 +90,7 @@ export function topicForDay(day) {
   return WRITING_TOPICS[topicIndexForDay(day)];
 }
 
-/** Debug / admin: berilgan sikldagi 30 kun tartibi */
+/** Debug: berilgan sikldagi 30 kun tartibi */
 export function previewCycle(cycleId = 0) {
   const order = shuffleForCycle(cycleId);
   return order.map((idx, dayInCycle) => ({
