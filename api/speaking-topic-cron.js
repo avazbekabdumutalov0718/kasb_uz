@@ -63,9 +63,9 @@ export async function GET(req) {
   const url = new URL(req.url);
   const force = url.searchParams.get('force') === '1';
 
-  if (!force && (hour !== 0 || minute > 15)) {
+  if (!force && hour !== 0) {
     return Response.json({
-      skipped: 'Only 00:00\u201300:15 Asia/Tashkent',
+      skipped: 'Only 00:00\u201300:59 Asia/Tashkent',
       day, hour, minute
     });
   }
