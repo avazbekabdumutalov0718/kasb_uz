@@ -44,6 +44,59 @@ function buildCaption(day, topic) {
   ].join('\n');
 }
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function sendPdf(channelId, pdfUrl, topic) {
+  const caption = '\ud83c\udfa4 ' + topic.en + ' \u00b7 Topic ' + topic.id + '/30';
+  const errors = [];
+
+  // 1) Faylni o'zimiz yuklab olamiz va Telegramga multipart qilib yuboramiz (3 urinish)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const r = await fetch(pdfUrl, { signal: AbortSignal.timeout(20000) });
+      if (!r.ok) throw new Error('PDF HTTP ' + r.status);
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (buf.length < 1000) throw new Error('PDF juda kichik (' + buf.length + ' bayt)');
+
+      const form = new FormData();
+      form.append('chat_id', String(channelId));
+      form.append('caption', caption);
+      form.append('document', new Blob([buf], { type: 'application/pdf' }), topic.file);
+
+      const t = await fetch(
+        'https://api.telegram.org/bot' + process.env.TELEGRAM_BOT_TOKEN + '/sendDocument',
+        { method: 'POST', body: form, signal: AbortSignal.timeout(30000) }
+      );
+      const j = await t.json();
+      if (!j.ok) throw new Error('Telegram: ' + (j.description || t.status));
+      return { doc: j.result, error: null };
+    } catch (e) {
+      errors.push('#' + attempt + ' ' + String(e.message || e));
+      if (attempt < 3) await sleep(1500 * attempt);
+    }
+  }
+
+  // 2) Zaxira: Telegramning o'ziga havola orqali olishni topshiramiz
+  try {
+    const doc = await tg('sendDocument', { chat_id: channelId, document: pdfUrl, caption });
+    return { doc, error: null };
+  } catch (e) {
+    errors.push('url: ' + String(e.message || e));
+  }
+
+  // 3) Oxirgi zaxira: hech bo'lmasa havolani yuboramiz
+  try {
+    await tg('sendMessage', {
+      chat_id: channelId,
+      text: '\ud83d\udcc4 PDF (Topic ' + topic.id + '): ' + pdfUrl,
+      disable_web_page_preview: false
+    });
+  } catch (e) {
+    errors.push('link: ' + String(e.message || e));
+  }
+  return { doc: null, error: errors.join(' | ') };
+}
+
 export async function GET(req) {
   const secret = process.env.CRON_SECRET || '';
   const scheduler = process.env.WORDRUSH_SCHEDULER_SECRET || '';
@@ -73,7 +126,8 @@ export async function GET(req) {
   const markerPath = 'wr-task-weekly-v1/speaking-topic-' + day + '.json';
   try {
     const existing = await bridge('read', { path: markerPath }).catch(() => ({ data: null }));
-    if (existing?.data?.sentAt && !force) {
+    const docOnlyReq = url.searchParams.get('docOnly') === '1';
+    if (existing?.data?.sentAt && existing?.data?.documentId && !force && !docOnlyReq) {
       return Response.json({
         status: 'already_sent',
         day,
@@ -85,29 +139,21 @@ export async function GET(req) {
     const topic = speakingForDay(day);
     const caption = buildCaption(day, topic).slice(0, 1024);
     const pdfUrl = SITE.replace(/\/$/, '') + '/speaking/' + encodeURIComponent(topic.file);
+    const docOnly = url.searchParams.get('docOnly') === '1';
 
-    const msg = await tg('sendMessage', {
-      chat_id: channelId,
-      text: caption,
-      disable_web_page_preview: true
-    });
+    // Xabar yuborilgan, lekin PDF ketmagan bo'lsa: faqat PDF'ni qayta yuboramiz
+    const retryDocOnly = docOnly || (existing?.data?.sentAt && !existing?.data?.documentId && !force);
 
-    let doc = null;
-    let docError = null;
-    try {
-      const head = await fetch(pdfUrl, { method: 'HEAD', signal: AbortSignal.timeout(8000) });
-      if (head.ok) {
-        doc = await tg('sendDocument', {
-          chat_id: channelId,
-          document: pdfUrl,
-          caption: '\ud83c\udfa4 ' + topic.en + ' \u00b7 Topic ' + topic.id + '/30'
-        });
-      } else {
-        docError = 'PDF not found at ' + pdfUrl + ' (HTTP ' + head.status + ')';
-      }
-    } catch (e) {
-      docError = String(e.message || e);
+    let msg = { message_id: existing?.data?.messageId || null };
+    if (!retryDocOnly) {
+      msg = await tg('sendMessage', {
+        chat_id: channelId,
+        text: caption,
+        disable_web_page_preview: true
+      });
     }
+
+    const { doc, error: docError } = await sendPdf(channelId, pdfUrl, topic);
 
     await bridge('save', {
       path: markerPath,
