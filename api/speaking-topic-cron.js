@@ -26,8 +26,6 @@ function tashkentNow() {
 }
 
 function buildCaption(day, topic) {
-  const bullets = (arr, max = 3) =>
-    (arr || []).slice(0, max).map((x, i) => (i + 1) + '. ' + x).join('\n');
   return [
     '\ud83c\udfa4 WORDRUSH \u00b7 BUGUNGI SPEAKING TOPIC',
     '\ud83d\udcc6 ' + day,
@@ -35,17 +33,14 @@ function buildCaption(day, topic) {
     '\ud83c\udfaf Topic ' + topic.id + '/30',
     '\ud83c\uddec\ud83c\udde7 ' + topic.en,
     '',
-    '\ud83d\udccc PART 1',
-    bullets(topic.part1, 3) || '\u2014',
+    '\ud83d\udcc4 PDF ichida:',
+    '\u2022 Part 1 savollar',
+    '\u2022 Part 2 cue card',
+    '\u2022 Part 3 discussion',
+    '\u2022 Collocations + Band 8 structures',
     '',
-    '\ud83d\udccc PART 2 (Cue card)',
-    bullets(topic.part2, 4) || '\u2014',
-    '',
-    '\ud83d\udccc PART 3',
-    bullets(topic.part3, 3) || '\u2014',
-    '',
-    '\ud83d\udcce To\u2018liq material (collocations, structures, Band 8) \u2014 PDF faylda.',
-    '\u2705 TASKS \u2192 Speaking bo\u2018limiga proof yuklang.'
+    '\u2705 TASKS \u2192 Speaking ga proof yuklang.',
+    '\ud83d\udcce To\u2018liq material pastdagi PDF faylda.'
   ].join('\n');
 }
 
