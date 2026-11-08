@@ -67,7 +67,7 @@ function openProofPicker(taskId){
  '<header class="proof-picker-header"><div><span class="proof-picker-eyebrow">',esc(groups.find(g=>g.tasks.some(t=>t[0]===taskId))?.label||'TASKS'),'</span><h2 id="proofPickerTitle">',esc(task?.[1]||'Proof qo‘shish'),'</h2></div><button type="button" class="proof-picker-close" aria-label="Yopish" data-proof-close>×</button></header>',
  '<div class="proof-picker-tip"><span class="proof-picker-tip-icon">✓</span><p>Rasm yoki faylni tanlang, xohlasangiz izoh qo‘shing. <b>Saqlash</b> bosilganda proof yuklanadi va vazifa avtomatik bajariladi.</p></div>',
  '<div id="proofPickerList" class="proof-picker-items"></div>',
- '<button type="button" class="proof-picker-add" id="proofPickerAdd"><span class="proof-picker-add-icon">＋</span><span id="proofPickerCount">Yana qo‘shish (0/10)</span></button>',
+ '<label class="proof-picker-add" id="proofPickerAdd" for="proofPickerFiles"><span class="proof-picker-add-icon">＋</span><span id="proofPickerCount">Yana qo‘shish (0/10)</span></label>',
  '<p class="proof-picker-help">PDF, HTML, rasm, audio yoki video · 10 tagacha fayl · har biri 100 MB gacha.</p>',
  '<input type="file" id="proofPickerFiles" class="proof-picker-hidden" multiple accept=".pdf,.html,.htm,image/*,audio/*,video/*,.mp3,.m4a,.mp4,.wav,.webm,.mov,.ogg">',
  '<input type="file" id="proofPickerReplace" class="proof-picker-hidden" accept=".pdf,.html,.htm,image/*,audio/*,video/*,.mp3,.m4a,.mp4,.wav,.webm,.mov,.ogg">',
@@ -129,7 +129,7 @@ function openProofPicker(taskId){
   const entries=[...visibleOld.map(e=>({entry:e,isNew:false})),...pending.map(e=>({entry:e,isNew:true}))];
   entries.forEach(({entry,isNew},i)=>list.append(itemRow(entry,isNew,i)));
   const count=total();dialog.querySelector('#proofPickerCount').textContent='Yana qo‘shish ('+count+'/10)';
-  addButton.disabled=count>=10;
+  addButton.disabled=count>=10;input.disabled=count>=10;addButton.style.opacity=count>=10?'.46':'';addButton.style.pointerEvents=count>=10?'none':'';
   saveButton.textContent=pending.length?'Saqlash · '+pending.length+' ta yangi fayl':'Saqlash';
  }
  function addFiles(files,replaces=''){
@@ -141,8 +141,7 @@ function openProofPicker(taskId){
   }
   draw();
  }
- addButton.onclick=()=>{input.value='';input.click()};
- input.onchange=()=>{addFiles(Array.from(input.files||[]));input.value=''};
+  input.onchange=()=>{addFiles(Array.from(input.files||[]));input.value=''};
  replacer.onchange=()=>{const file=replacer.files?.[0];if(!file||!replaceTarget)return;
   const {entry,isNew}=replaceTarget;
   if(isNew){if(allowed(file)&&file.size<=maxSize){entry.file=file;entry.name=file.name;entry.type=file.type}}
@@ -152,7 +151,7 @@ function openProofPicker(taskId){
  saveButton.onclick=async()=>{
   if(busy)return;
   if(!pending.length&&!existing.some(e=>e.note!==e.originalNote)){toast('Yangi fayl yoki izoh mavjud emas.');return}
-  busy=true;saveButton.disabled=true;addButton.disabled=true;saveButton.textContent='Saqlanmoqda…';
+  busy=true;saveButton.disabled=true;addButton.disabled=true;input.disabled=true;addButton.style.pointerEvents='none';saveButton.textContent='Saqlanmoqda…';
   let failed=0;
   try{
    if(openedDay!==day)throw Error('Sana o‘zgargan. Oynani qayta oching.');
