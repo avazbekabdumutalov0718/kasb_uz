@@ -1,7 +1,7 @@
 import {bridge,tg,titles} from './_tasks-kit.js';
 import {analyze,weekStart} from './tasks-analytics.js';
 export const config={maxDuration:60};
-const groupItems={Reading:['r1','r2','r3'],Listening:['l1','l2','l3'],Speaking:['s1','s2','s3','s4','s5','s6'],Writing:['w1','w2','w3'],Gym:['g1'],Namoz:['p1','p2','p3','p4','p5']};
+const groupItems={Reading:['r1','r2','r3','r4'],Listening:['l1','l2','l3'],Speaking:['s1','s2','s3','s4','s5','s6'],Writing:['w1','w2','w3'],Gym:['g1'],Namoz:['p1','p2','p3','p4','p5']};
 const shift=(s,n)=>{const d=new Date(s+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 const short=['Du','Se','Ch','Pa','Ju','Sh','Ya'];
 export async function GET(req){
