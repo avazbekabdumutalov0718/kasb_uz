@@ -11,6 +11,10 @@
     {
       "path": "/api/writing-topic-cron",
       "schedule": "0 19 * * *"
+    },
+    {
+      "path": "/api/speaking-topic-cron",
+      "schedule": "5 19 * * *"
     }
   ]
 }
