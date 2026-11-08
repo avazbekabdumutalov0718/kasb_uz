@@ -1,6 +1,6 @@
 import {user,response,bridge,titles} from './_tasks-kit.js';
 export const config={maxDuration:30};
-const groups={Reading:['r1','r2','r3'],Listening:['l1','l2','l3'],Speaking:['s1','s2','s3','s4','s5','s6'],Writing:['w1','w2','w3'],Gym:['g1'],Namoz:['p1','p2','p3','p4','p5']};
+const groups={Reading:['r1','r2','r3','r4'],Listening:['l1','l2','l3'],Speaking:['s1','s2','s3','s4','s5','s6'],Writing:['w1','w2','w3'],Gym:['g1'],Namoz:['p1','p2','p3','p4','p5']};
 const offset=(day,n)=>{const d=new Date(day+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
 export function weekStart(day){const d=new Date(day+'T12:00:00Z');return offset(day,-((d.getUTCDay()+6)%7))}
 export function analyze(rows,start,end=start){
