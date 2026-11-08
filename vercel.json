@@ -16,5 +16,15 @@
       "path": "/api/speaking-topic-cron",
       "schedule": "5 19 * * *"
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/tasks-upload",
+      "destination": "/api/tasks-files"
+    },
+    {
+      "source": "/api/tasks-download",
+      "destination": "/api/tasks-files"
+    }
   ]
 }
