@@ -48,52 +48,48 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function sendPdf(channelId, pdfUrl, topic) {
   const caption = '\ud83c\udfa4 ' + topic.en + ' \u00b7 Topic ' + topic.id + '/30';
+  const name = encodeURIComponent(topic.file);
+  const site = SITE.replace(/\/$/, '');
+
+  // PDF bir necha joydan izlanadi: sayt (ikki xil joylashuv) va GitHub'ning o'zi
+  const sources = [
+    site + '/speaking/' + name,
+    site + '/public/speaking/' + name,
+    'https://raw.githubusercontent.com/avazbekabdumutalov0718/kasb_uz/main/public/speaking/' + name
+  ];
   const errors = [];
 
-  // 1) Faylni o'zimiz yuklab olamiz va Telegramga multipart qilib yuboramiz (3 urinish)
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const r = await fetch(pdfUrl, { signal: AbortSignal.timeout(20000) });
-      if (!r.ok) throw new Error('PDF HTTP ' + r.status);
-      const buf = Buffer.from(await r.arrayBuffer());
-      if (buf.length < 1000) throw new Error('PDF juda kichik (' + buf.length + ' bayt)');
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    for (const src of sources) {
+      try {
+        const r = await fetch(src, { signal: AbortSignal.timeout(20000), redirect: 'follow' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const buf = Buffer.from(await r.arrayBuffer());
+        // Haqiqiy PDF ekanini tekshiramiz (%PDF), HTML xato sahifa emas
+        if (buf.length < 1000 || buf.subarray(0, 4).toString() !== '%PDF') {
+          throw new Error('PDF emas (' + buf.length + ' bayt)');
+        }
 
-      const form = new FormData();
-      form.append('chat_id', String(channelId));
-      form.append('caption', caption);
-      form.append('document', new Blob([buf], { type: 'application/pdf' }), topic.file);
+        const form = new FormData();
+        form.append('chat_id', String(channelId));
+        form.append('caption', caption);
+        form.append('document', new Blob([buf], { type: 'application/pdf' }), topic.file);
 
-      const t = await fetch(
-        'https://api.telegram.org/bot' + process.env.TELEGRAM_BOT_TOKEN + '/sendDocument',
-        { method: 'POST', body: form, signal: AbortSignal.timeout(30000) }
-      );
-      const j = await t.json();
-      if (!j.ok) throw new Error('Telegram: ' + (j.description || t.status));
-      return { doc: j.result, error: null };
-    } catch (e) {
-      errors.push('#' + attempt + ' ' + String(e.message || e));
-      if (attempt < 3) await sleep(1500 * attempt);
+        const t = await fetch(
+          'https://api.telegram.org/bot' + process.env.TELEGRAM_BOT_TOKEN + '/sendDocument',
+          { method: 'POST', body: form, signal: AbortSignal.timeout(30000) }
+        );
+        const j = await t.json();
+        if (!j.ok) throw new Error('Telegram: ' + (j.description || t.status));
+        return { doc: j.result, error: null };
+      } catch (e) {
+        errors.push(src.replace(/^https:\/\//, '').slice(0, 45) + ' -> ' + String(e.message || e));
+      }
     }
+    if (attempt < 2) await sleep(2000);
   }
 
-  // 2) Zaxira: Telegramning o'ziga havola orqali olishni topshiramiz
-  try {
-    const doc = await tg('sendDocument', { chat_id: channelId, document: pdfUrl, caption });
-    return { doc, error: null };
-  } catch (e) {
-    errors.push('url: ' + String(e.message || e));
-  }
-
-  // 3) Oxirgi zaxira: hech bo'lmasa havolani yuboramiz
-  try {
-    await tg('sendMessage', {
-      chat_id: channelId,
-      text: '\ud83d\udcc4 PDF (Topic ' + topic.id + '): ' + pdfUrl,
-      disable_web_page_preview: false
-    });
-  } catch (e) {
-    errors.push('link: ' + String(e.message || e));
-  }
+  // Havola xabari yuborilmaydi: faqat PDF fayl kerak. Xato javobda ko'rinadi.
   return { doc: null, error: errors.join(' | ') };
 }
 
