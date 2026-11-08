@@ -8,7 +8,7 @@ const zone='Asia/Tashkent',key='wordrush.tasks.v2',groups=[
  {id:'gym',label:'GYM',icon:'◇',tasks:[['g1','Gym 1 time a day',35]]},
  {id:'prayer',label:'5 MAHAL NAMOZ',icon:'☾',tasks:[['p1','Bomdod',10],['p2','Peshin',10],['p3','Asr',10],['p4','Shom',10],['p5','Xufton',10]]}
 ];
-const all=groups.flatMap(g=>g.tasks),dbName='wordrush.tasks.proofs.v1',storeName='proofs',maxSize=100*1024*1024;
+const all=groups.flatMap(g=>g.tasks),dbName='wordrush.tasks.proofs.v1',storeName='proofs',maxSize=100*1024*1024,maxProofs=20;
 let day='',filter='all',timers={},active=null,dbPromise=null,state=readState(),blobUrls=new Set();
 function dayNow(){return new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
 function readState(){try{const d=JSON.parse(localStorage.getItem(key)||'{}');return d&&typeof d==='object'?d:{}}catch{return {}}}
@@ -67,8 +67,8 @@ function openProofPicker(taskId){
  '<header class="proof-picker-header"><div><span class="proof-picker-eyebrow">',esc(groups.find(g=>g.tasks.some(t=>t[0]===taskId))?.label||'TASKS'),'</span><h2 id="proofPickerTitle">',esc(task?.[1]||'Proof qo‘shish'),'</h2></div><button type="button" class="proof-picker-close" aria-label="Yopish" data-proof-close>×</button></header>',
  '<div class="proof-picker-tip"><span class="proof-picker-tip-icon">✓</span><p>Rasm yoki faylni tanlang, xohlasangiz izoh qo‘shing. <b>Saqlash</b> bosilganda proof yuklanadi va vazifa avtomatik bajariladi.</p></div>',
  '<div id="proofPickerList" class="proof-picker-items"></div>',
- '<label class="proof-picker-add" id="proofPickerAdd" for="proofPickerFiles"><span class="proof-picker-add-icon">＋</span><span id="proofPickerCount">Yana qo‘shish (0/10)</span></label>',
- '<p class="proof-picker-help">PDF, HTML, rasm, audio yoki video · 10 tagacha fayl · har biri 100 MB gacha.</p>',
+ '<label class="proof-picker-add" id="proofPickerAdd" for="proofPickerFiles"><span class="proof-picker-add-icon">＋</span><span id="proofPickerCount">Yana qo‘shish (0/20)</span></label>',
+ '<p class="proof-picker-help">PDF, HTML, rasm, audio yoki video · 20 tagacha fayl · har biri 100 MB gacha · fayllarni shu oynaga tashlab ham qo‘shsa bo‘ladi.</p>',
  '<input type="file" id="proofPickerFiles" class="proof-picker-hidden" multiple accept=".pdf,.html,.htm,image/*,audio/*,video/*,.mp3,.m4a,.mp4,.wav,.webm,.mov,.ogg">',
  '<input type="file" id="proofPickerReplace" class="proof-picker-hidden" accept=".pdf,.html,.htm,image/*,audio/*,video/*,.mp3,.m4a,.mp4,.wav,.webm,.mov,.ogg">',
  '<footer class="proof-picker-footer"><button type="button" class="proof-picker-save" id="proofPickerSave">Saqlash</button></footer>',
@@ -128,20 +128,25 @@ function openProofPicker(taskId){
   const visibleOld=existing.filter(e=>!pending.some(p=>p.replaces===e.id));
   const entries=[...visibleOld.map(e=>({entry:e,isNew:false})),...pending.map(e=>({entry:e,isNew:true}))];
   entries.forEach(({entry,isNew},i)=>list.append(itemRow(entry,isNew,i)));
-  const count=total();dialog.querySelector('#proofPickerCount').textContent='Yana qo‘shish ('+count+'/10)';
-  addButton.disabled=count>=10;input.disabled=count>=10;addButton.style.opacity=count>=10?'.46':'';addButton.style.pointerEvents=count>=10?'none':'';
+  const count=total();dialog.querySelector('#proofPickerCount').textContent='Yana qo‘shish ('+count+'/'+maxProofs+')';
+  addButton.disabled=count>=maxProofs;input.disabled=count>=maxProofs;addButton.style.opacity=count>=maxProofs?'.46':'';addButton.style.pointerEvents=count>=maxProofs?'none':'';
   saveButton.textContent=pending.length?'Saqlash · '+pending.length+' ta yangi fayl':'Saqlash';
  }
  function addFiles(files,replaces=''){
   for(const f of files){
    if(!allowed(f)){toast('Bu fayl turi qo‘llab-quvvatlanmaydi: '+f.name,true);continue}
    if(f.size>maxSize){toast('100 MB limit: '+f.name,true);continue}
-   if(!replaces&&total()>=10){toast('Bir vazifaga ko‘pi bilan 10 ta proof qo‘shiladi.',true);break}
+   if(!replaces&&total()>=maxProofs){toast('Bir vazifaga ko‘pi bilan '+maxProofs+' ta proof qo‘shiladi.',true);break}
    pending.push({file:f,name:f.name,type:f.type,note:'',replaces});
   }
   draw();
  }
   input.onchange=()=>{addFiles(Array.from(input.files||[]));input.value=''};
+ const dropOn=on=>{dialog.style.outline=on?'4px dashed #dc743a':'';dialog.style.outlineOffset=on?'-10px':''};
+ dialog.addEventListener('dragenter',ev=>{if(busy)return;ev.preventDefault();dropOn(true)});
+ dialog.addEventListener('dragover',ev=>{if(busy)return;ev.preventDefault();if(ev.dataTransfer)ev.dataTransfer.dropEffect='copy';dropOn(true)});
+ dialog.addEventListener('dragleave',ev=>{if(!ev.relatedTarget||!dialog.contains(ev.relatedTarget))dropOn(false)});
+ dialog.addEventListener('drop',ev=>{ev.preventDefault();dropOn(false);if(busy)return;const dropped=Array.from(ev.dataTransfer?.files||[]);if(dropped.length)addFiles(dropped)});
  replacer.onchange=()=>{const file=replacer.files?.[0];if(!file||!replaceTarget)return;
   const {entry,isNew}=replaceTarget;
   if(isNew){if(allowed(file)&&file.size<=maxSize){entry.file=file;entry.name=file.name;entry.type=file.type}}
@@ -162,11 +167,38 @@ function openProofPicker(taskId){
      e.originalNote=e.note;
     }
    }
-   for(const e of [...pending]){
-    const amount=await filesAdded(taskId,[e.file],[e.note]);
-    if(amount){const pos=pending.indexOf(e);if(pos!==-1)pending.splice(pos,1);
-      if(e.replaces){await remove(taskId,e.replaces);const posOld=existing.findIndex(p=>p.id===e.replaces);if(posOld!==-1)existing.splice(posOld,1)}
-    }else failed++;
+   const cloud=window.WRTasksCloud;
+   if(cloud?.ready&&cloud.uploadFile&&cloud.register){
+    // 1) fayllarni parallel (bir vaqtda 4 tadan) bulutga yuklaymiz
+    const queue=[...pending],uploaded=new Map();let next=0,finished=0;
+    const worker=async()=>{
+     while(next<queue.length){
+      const e=queue[next++];
+      try{uploaded.set(e,await cloud.uploadFile(day,taskId,e.file))}
+      catch(err){failed++;toast(e.name+': '+err.message,true)}
+      finished++;saveButton.textContent='Yuklanmoqda '+finished+'/'+queue.length+'…';
+     }
+    };
+    await Promise.all(Array.from({length:Math.min(4,queue.length)},worker));
+    // 2) yuklanganlarni vazifaga ketma-ket yozamiz (bir-birini buzmasligi uchun)
+    for(const e of queue){
+     const blob=uploaded.get(e);if(!blob)continue;
+     try{
+      const result=await cloud.register(day,taskId,e.file,blob,e.note||'');
+      if(result){state[day][taskId]=result;
+       const pos=pending.indexOf(e);if(pos!==-1)pending.splice(pos,1);
+       if(e.replaces){await remove(taskId,e.replaces);const posOld=existing.findIndex(p=>p.id===e.replaces);if(posOld!==-1)existing.splice(posOld,1)}
+      }else failed++;
+     }catch(err){failed++;toast(e.name+': '+err.message,true)}
+    }
+    save();render();
+   }else{
+    for(const e of [...pending]){
+     const amount=await filesAdded(taskId,[e.file],[e.note]);
+     if(amount){const pos=pending.indexOf(e);if(pos!==-1)pending.splice(pos,1);
+       if(e.replaces){await remove(taskId,e.replaces);const posOld=existing.findIndex(p=>p.id===e.replaces);if(posOld!==-1)existing.splice(posOld,1)}
+     }else failed++;
+    }
    }
    if(!failed){cleanup();toast('✅ Proof saqlandi!');return}
    toast(failed+' ta faylni saqlab bo‘lmadi.',true);
