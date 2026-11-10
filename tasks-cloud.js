@@ -79,17 +79,39 @@ function addResend(){
  };
  document.body.appendChild(b);
 }
+let syncStarted=false;
+function startSync(){
+ if(syncStarted)return;syncStarted=true;
+ window.addEventListener('focus',()=>{getDay(window.WRTasks.day()).catch(()=>{})});
+ setInterval(()=>{if(document.visibilityState==='visible')getDay(window.WRTasks.day()).catch(()=>{})},30000);
+}
+let connecting=null;
+// Kirish muvaffaqiyatsiz bo'lsa, qayta urinadi. Fayllar hech qachon faqat brauzerda qolib ketmasligi uchun.
+function connect(){
+ if(ready)return Promise.resolve(true);
+ if(connecting)return connecting;
+ connecting=(async()=>{
+  for(let i=0;i<3&&!ready;i++){
+   try{ready=await login();if(ready)startSync()}catch(e){status('☁ Kirish xatosi: '+e.message,true)}
+   if(!ready)await new Promise(r=>setTimeout(r,1200*(i+1)));
+  }
+  connecting=null;return ready;
+ })();
+ return connecting;
+}
 async function boot(){
  if(!window.WRTasks){setTimeout(boot,90);return}
  addResend();
  status('☁ Telegram bilan bulutli saqlash tekshirilmoqda…');
- try{ready=await login();if(ready){window.addEventListener('focus',()=>{getDay(window.WRTasks.day()).catch(()=>{})});setInterval(()=>{if(document.visibilityState==='visible')getDay(window.WRTasks.day()).catch(()=>{})},30000)}}catch(e){status('☁ Sinxronlash xatosi: '+e.message,true)}
+ await connect();
+ // Kirilmagan bo'lsa, har 15 soniyada o'zi qayta urinadi
+ setInterval(()=>{if(!ready)connect()},15000);
 }
 window.WRTasksCloud={
  get ready(){return ready},
  getDay,
  update:(day,id,state)=>{pending=pending.then(()=>update(day,id,state)).catch(e=>status('Cloud save: '+e.message,true));return pending},
- upload,uploadFile,register,remove,updateNote,
+ upload,uploadFile,register,remove,updateNote,connect,
  refresh:()=>getDay(window.WRTasks?.day())
 };
 window.addEventListener('load',boot);
