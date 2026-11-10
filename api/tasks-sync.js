@@ -33,6 +33,46 @@ const BOT_TOKEN =
 const COURSE_START = process.env.COURSE_START || '2026-10-27';
 
 export async function GET(req) {
+  /* CMD/curl orqali: ?resendAll=1 — bugungi (yoki ?day=YYYY-MM-DD) hamma proof'larni kanalga qayta yuboradi */
+  const reqUrl = new URL(req.url);
+
+  if (reqUrl.searchParams.get('resendAll') === '1') {
+    const secret = process.env.CRON_SECRET || '';
+
+    if (!secret || (req.headers.get('authorization') || '') !== 'Bearer ' + secret)
+      return response({ error: 'Forbidden' }, 403);
+
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Tashkent', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).format(new Date());
+
+    const targetDay = reqUrl.searchParams.get('day') || today;
+
+    if (!validDay(targetDay))
+      return response({ error: 'Invalid day' }, 400);
+
+    try {
+      const { users } = await bridge('weeklyUsers');
+      const results = [];
+
+      for (const u of users || []) {
+        const target = String(u.uid || '');
+        if (!/^\d+$/.test(target)) continue;
+
+        const found = await entriesForDay(target, targetDay);
+        const hasProofs = Object.values(found || {}).some(x => x?.proofs?.length);
+        if (!hasProofs) continue;
+
+        const r = await notify(target, targetDay);
+        results.push({ uid: target, delivered: !!r.delivered, reason: r.reason || null });
+      }
+
+      return response({ day: targetDay, users: results.length, results });
+    } catch (e) {
+      return response({ error: String(e.message || e) }, 503);
+    }
+  }
+
   const uid = user(req);
 
   if (!uid)
