@@ -32,6 +32,8 @@ function allowed(file){const ext=file.name.toLowerCase().split('.').pop(),extens
 async function filesAdded(id,files,notes=[]){
  if(!files.length)return 0;
  const r=ensure(day,id),cloud=window.WRTasksCloud;let added=0;
+ if(window.Telegram?.WebApp?.initData&&!cloud?.ready&&cloud?.connect)await cloud.connect();
+ if(window.Telegram?.WebApp?.initData&&!cloud?.ready){toast('Telegram bilan kirish amalga oshmadi. Mini App‘ni yopib qayta oching.',true);return 0}
  if(cloud?.ready){
   for(let i=0;i<files.length;i++){
    const file=files[i];
@@ -168,6 +170,8 @@ function openProofPicker(taskId){
     }
    }
    const cloud=window.WRTasksCloud;
+   if(window.Telegram?.WebApp?.initData&&!cloud?.ready&&cloud?.connect)await cloud.connect();
+   if(window.Telegram?.WebApp?.initData&&!cloud?.ready)throw Error('Telegram bilan kirish amalga oshmadi. Mini App‘ni yopib qayta oching.');
    if(cloud?.ready&&cloud.uploadFile&&cloud.register){
     // 1) fayllarni parallel (bir vaqtda 4 tadan) bulutga yuklaymiz
     const queue=[...pending],uploaded=new Map();let next=0,finished=0;
@@ -181,10 +185,11 @@ function openProofPicker(taskId){
     };
     await Promise.all(Array.from({length:Math.min(4,queue.length)},worker));
     // 2) yuklanganlarni vazifaga ketma-ket yozamiz (bir-birini buzmasligi uchun)
+    const okList=queue.filter(x=>uploaded.get(x));
     for(const e of queue){
      const blob=uploaded.get(e);if(!blob)continue;
      try{
-      const result=await cloud.register(day,taskId,e.file,blob,e.note||'');
+      const result=await cloud.register(day,taskId,e.file,blob,e.note||'',e!==okList[okList.length-1]);
       if(result){state[day][taskId]=result;
        const pos=pending.indexOf(e);if(pos!==-1)pending.splice(pos,1);
        if(e.replaces){await remove(taskId,e.replaces);const posOld=existing.findIndex(p=>p.id===e.replaces);if(posOld!==-1)existing.splice(posOld,1)}
