@@ -38,8 +38,9 @@ async function uploadFile(day,id,file){
  return {pathname:signed.path};
 }
 // 2-bosqich: yuklangan faylni vazifaga yozish (ketma-ket bo‘lishi kerak)
-async function register(day,id,file,blob,note=''){
- const saved=await parse(await fetch('/api/tasks-sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'proof',day,id,proof:{url:'',pathname:blob.pathname,name:file.name,type:file.type,note:String(note).slice(0,400)}})}));
+async function register(day,id,file,blob,note='',silent=false){
+ const saved=await parse(await fetch('/api/tasks-sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'proof',day,id,silent,proof:{url:'',pathname:blob.pathname,name:file.name,type:file.type,note:String(note).slice(0,400)}})}));
+ if(saved.delivery&&saved.delivery.delivered===false)status('⚠️ Kanalga yuborilmadi: '+(saved.delivery.reason||'noma’lum xato'),true);
  window.WRTasks?.importTask(day,id,saved.item);
  status('✓ '+file.name+' cloud’da saqlandi');
  return saved.item;
@@ -55,8 +56,27 @@ async function updateNote(day,id,proofId,note){
  window.WRTasks?.importTask(day,id,r.item);return r.item;
 }
 async function remove(day,id,proofId){if(!ready)throw Error('Cloud login required');const r=await parse(await fetch('/api/tasks-sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',day,id,proofId})}));window.WRTasks?.importTask(day,id,r.item);return r.item}
+function addResend(){
+ if(document.getElementById('resendReport'))return;
+ const b=document.createElement('button');b.id='resendReport';b.type='button';b.textContent='📤 Kanalga qayta yuborish';
+ b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:50;padding:11px 15px;border:0;border-radius:999px;background:#fb7a2b;color:#fff;font:inherit;font-weight:800;font-size:13px;box-shadow:0 6px 18px rgba(0,0,0,.28);cursor:pointer';
+ b.onclick=async()=>{
+  if(b.disabled)return;const old=b.textContent;b.disabled=true;b.textContent='Yuborilmoqda…';
+  try{
+   const day=window.WRTasks.day();
+   const r=await fetch('/api/tasks-sync',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'resend',day})});
+   const d=await r.json().catch(()=>({}));
+   if(!r.ok)throw Error(d.error||('Server xatosi '+r.status));
+   if(d.delivery&&d.delivery.delivered)b.textContent='✅ Yuborildi';
+   else{b.textContent='⚠️ '+((d.delivery&&d.delivery.reason)||'Yuborilmadi');status('⚠️ Kanalga yuborilmadi: '+((d.delivery&&d.delivery.reason)||'noma’lum xato'),true)}
+  }catch(e){b.textContent='⚠️ '+e.message}
+  setTimeout(()=>{b.disabled=false;b.textContent=old},5000);
+ };
+ document.body.appendChild(b);
+}
 async function boot(){
  if(!window.WRTasks){setTimeout(boot,90);return}
+ addResend();
  status('☁ Telegram bilan bulutli saqlash tekshirilmoqda…');
  try{ready=await login();if(ready){window.addEventListener('focus',()=>{getDay(window.WRTasks.day()).catch(()=>{})});setInterval(()=>{if(document.visibilityState==='visible')getDay(window.WRTasks.day()).catch(()=>{})},30000)}}catch(e){status('☁ Sinxronlash xatosi: '+e.message,true)}
 }
