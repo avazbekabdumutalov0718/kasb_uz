@@ -62,6 +62,15 @@ export async function POST(req) {
     return response({ error: 'Invalid JSON' }, 400);
   }
 
+  /* Tanlangan kunning hamma proof'larini kanalga qayta yuborish */
+  if (body.action === 'resend') {
+    if (!validDay(body.day))
+      return response({ error: 'Invalid day' }, 400);
+
+    const result = await notify(uid, body.day);
+    return response({ delivery: result });
+  }
+
   const { day, id, action } = body;
 
   if (!validDay(day) || !validTask(id))
@@ -144,6 +153,8 @@ export async function POST(req) {
     return response({ item: current });
   }
 
+  let delivery = null;
+
   if (action === 'proof') {
     const p = body.proof;
 
@@ -182,10 +193,11 @@ export async function POST(req) {
 
       await save(taskPath(uid, day, id), current);
       await publishScore(uid, day);
-      await notify(uid, day);
+      // Bir nechta fayl ketma-ket yuklanganda hisobot faqat oxirgisida yuboriladi
+      if (body.silent !== true) delivery = await notify(uid, day);
     }
 
-    return response({ item: current });
+    return response({ item: current, delivery });
   }
 
   return response({ error: 'Unknown action' }, 400);
