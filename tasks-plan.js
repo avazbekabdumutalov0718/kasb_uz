@@ -37,16 +37,13 @@
         T('b1', 'Essay analysis · learn new vocab · at least 2 grammar structures', 50),
         T('b2', 'Write essay · Task 1–2', 60),
         T('b3', 'Learn topic collection', 30),
-        T('b4', 'Learn types of questions', 25),
-        T('b5', 'Extra tasks (if there is enough time)', 30)
+        T('b4', 'Learn types of questions', 25)
       ]),
-      G('listening', 'Listening', '♫', [
+      G('extra', 'Extra', '✦', [
         T('c1', 'Listening podcast · learn something new', 30),
-        T('c2', 'Speed listening', 20)
-      ]),
-      G('speaking', 'Speaking', '🎙', [
         T('d1', 'Speaking with AI or partner', 30),
-        T('d2', 'Learn new topic collection', 30)
+        T('d2', 'Learn new topic collection', 30),
+        T('c2', 'Speed listening', 20)
       ])
     ]
   });
@@ -68,7 +65,6 @@
         T('f3', 'Speed listening', 20)
       ]),
       G('extra', 'Extra', '✦', [
-        T('h1', 'Extra tasks (if there is enough time)', 30),
         T('h2', 'Read an article', 25),
         T('h3', 'Essay analysis', 30)
       ])
