@@ -29,21 +29,21 @@
     kind: 'day1', label: 'DAY 1', title: 'Reading · Writing · Vocab', emoji: '📖',
     groups: [
       G('reading', 'Reading', '▤', [
-        T('a1', '4 ELS mini passages', 40),
-        T('a2', '1 passage + analysis + 20+ vocab', 45),
-        T('a3', 'Article', 25)
+        T('r1', '4 ELS mini passages', 40),
+        T('r2', '1 passage + analysis + 20+ vocab', 45),
+        T('r3', 'Article', 25)
       ]),
       G('writing', 'Writing', '✎', [
-        T('b1', 'Essay analysis · learn new vocab · at least 2 grammar structures', 50),
-        T('b2', 'Write essay · Task 1–2', 60),
-        T('b3', 'Learn topic collection', 30),
-        T('b4', 'Learn types of questions', 25)
+        T('r4', 'Essay analysis · learn new vocab · at least 2 grammar structures', 50),
+        T('l1', 'Write essay · Task 1–2', 60),
+        T('l2', 'Learn topic collection', 30),
+        T('l3', 'Learn types of questions', 25)
       ]),
       G('extra', 'Extra', '✦', [
-        T('c1', 'Listening podcast · learn something new', 30),
-        T('d1', 'Speaking with AI or partner', 30),
-        T('d2', 'Learn new topic collection', 30),
-        T('c2', 'Speed listening', 20)
+        T('s1', 'Listening podcast · learn something new', 30),
+        T('s2', 'Speaking with AI or partner', 30),
+        T('s3', 'Learn new topic collection', 30),
+        T('s4', 'Speed listening', 20)
       ])
     ]
   });
@@ -52,21 +52,21 @@
     kind: 'day2', label: 'DAY 2', title: 'Speaking · Listening · Vocab', emoji: '🎧',
     groups: [
       G('speaking', 'Speaking', '🎙', [
-        T('e1', 'Full mock', 20),
-        T('e2', 'Learn topic collection', 30),
-        T('e3', 'Speaking with AI or partner', 30),
-        T('e4', 'Learn at least 2 structures', 20),
-        T('e5', 'Shadowing', 20),
-        T('e6', 'Record and speak about something that happened during the day', 10)
+        T('s5', 'Full mock', 20),
+        T('s6', 'Learn topic collection', 30),
+        T('w1', 'Speaking with AI or partner', 30),
+        T('w2', 'Learn at least 2 structures', 20),
+        T('w3', 'Shadowing', 20),
+        T('g1', 'Record and speak about something that happened during the day', 10)
       ]),
       G('listening', 'Listening', '♫', [
-        T('f1', 'Listening · 2 parts', 45),
-        T('f2', 'Listen to a podcast · learn vocab', 30),
-        T('f3', 'Speed listening', 20)
+        T('p1', 'Listening · 2 parts', 45),
+        T('p2', 'Listen to a podcast · learn vocab', 30),
+        T('p3', 'Speed listening', 20)
       ]),
       G('extra', 'Extra', '✦', [
-        T('h2', 'Read an article', 25),
-        T('h3', 'Essay analysis', 30)
+        T('p4', 'Read an article', 25),
+        T('p5', 'Essay analysis', 30)
       ])
     ]
   });
@@ -75,8 +75,8 @@
     kind: 'sunday', label: 'SUNDAY', title: 'Full Mock · Review', emoji: '🏁',
     groups: [
       G('sunday', 'Mock & Review', '🏁', [
-        T('k1', 'Full mock and analysis', 180),
-        T('k2', 'Review all tasks', 60)
+        T('r1', 'Full mock and analysis', 180),
+        T('r2', 'Review all tasks', 60)
       ])
     ]
   });
@@ -86,14 +86,24 @@
   });
 
   var ALL = [].concat(DAY1.tasks, DAY2.tasks, SUNDAY.tasks);
-  var BY_ID = {};
+  // Vazifa kodlari (r1, l1, s1 ...) eski tizim bilan mos; bir xil kod turli kun turlarida qayta ishlatiladi,
+  // shuning uchun qidiruv kun turiga qarab bajariladi.
+  var BY_KIND = {}, KNOWN = {};
   [DAY1, DAY2, SUNDAY].forEach(function (p) {
+    BY_KIND[p.kind] = {};
     p.groups.forEach(function (g) {
       g.tasks.forEach(function (t) {
-        BY_ID[t[0]] = { id: t[0], title: t[1], minutes: t[2], group: g.id, groupName: g.name, kind: p.kind };
+        var info = { id: t[0], title: t[1], minutes: t[2], group: g.id, groupName: g.name, kind: p.kind };
+        BY_KIND[p.kind][t[0]] = info;
+        if (!KNOWN[t[0]]) KNOWN[t[0]] = info;
       });
     });
   });
+  function lookup(id, day) {
+    id = String(id || '');
+    if (day) { var p = forDay(day); if (BY_KIND[p.kind] && BY_KIND[p.kind][id]) return BY_KIND[p.kind][id]; }
+    return KNOWN[id] || null;
+  }
 
   function weekday(day) { return new Date(day + 'T12:00:00Z').getUTCDay(); } // 0 = yakshanba
 
@@ -110,9 +120,9 @@
     forDay: forDay,
     all: ALL,
     kinds: { day1: DAY1, day2: DAY2, sunday: SUNDAY, none: NONE },
-    has: function (id) { return Object.prototype.hasOwnProperty.call(BY_ID, String(id || '')); },
-    info: function (id) { return BY_ID[String(id || '')] || null; },
-    titleOf: function (id) { var x = BY_ID[String(id || '')]; return x ? x.title : ''; },
-    minutesOf: function (id) { var x = BY_ID[String(id || '')]; return x ? x.minutes : 0; }
+    has: function (id) { return Object.prototype.hasOwnProperty.call(KNOWN, String(id || '')); },
+    info: function (id, day) { return lookup(id, day); },
+    titleOf: function (id, day) { var x = lookup(id, day); return x ? x.title : ''; },
+    minutesOf: function (id, day) { var x = lookup(id, day); return x ? x.minutes : 0; }
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

@@ -11,7 +11,7 @@ const plan=()=>PLAN.forDay(day);
 function dayNow(){return new Intl.DateTimeFormat('en-CA',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
 function readState(){try{const d=JSON.parse(localStorage.getItem(key)||'{}');return d&&typeof d==='object'?d:{}}catch{return {}}}
 function save(){try{localStorage.setItem(key,JSON.stringify(state))}catch{toast('Checklist uchun brauzer xotirasi to‘lgan.',true)}}
-function ensure(d,id){state[d]??={};state[d][id]??={proofs:[],done:false,seconds:0,duration:PLAN.minutesOf(id)||10,clock:''};return state[d][id]}
+function ensure(d,id){state[d]??={};state[d][id]??={proofs:[],done:false,seconds:0,duration:PLAN.minutesOf(id,d)||10,clock:''};return state[d][id]}
 function db(){return dbPromise??=new Promise((resolve,reject)=>{const req=indexedDB.open(dbName,1);req.onupgradeneeded=()=>{const database=req.result;if(!database.objectStoreNames.contains(storeName))database.createObjectStore(storeName,{keyPath:'id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
 async function putProof(item){const database=await db();return new Promise((resolve,reject)=>{const tx=database.transaction(storeName,'readwrite');tx.objectStore(storeName).put(item);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
 async function deleteProof(id){const database=await db();return new Promise((resolve,reject)=>{const tx=database.transaction(storeName,'readwrite');tx.objectStore(storeName).delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})}
@@ -69,6 +69,7 @@ function openProofPicker(taskId){
  '<div class="proof-picker-tip"><span class="proof-picker-tip-icon">✓</span><p>Rasm yoki faylni tanlang, xohlasangiz izoh qo‘shing. <b>Saqlash</b> bosilganda proof yuklanadi va vazifa avtomatik bajariladi.</p></div>',
  '<div id="proofPickerList" class="proof-picker-items"></div>',
  '<label class="proof-picker-add" id="proofPickerAdd" for="proofPickerFiles"><span class="proof-picker-add-icon">＋</span><span id="proofPickerCount">Yana qo‘shish (0/20)</span></label>',
+ '<p class="proof-picker-error" id="proofPickerError" hidden></p>',
  '<p class="proof-picker-help">PDF, HTML, rasm, audio yoki video · 20 tagacha fayl · har biri 100 MB gacha · fayllarni shu oynaga tashlab ham qo‘shsa bo‘ladi.</p>',
  '<input type="file" id="proofPickerFiles" class="proof-picker-hidden" multiple accept=".pdf,.html,.htm,image/*,audio/*,video/*,.mp3,.m4a,.mp4,.wav,.webm,.mov,.ogg">',
  '<input type="file" id="proofPickerReplace" class="proof-picker-hidden" accept=".pdf,.html,.htm,image/*,audio/*,video/*,.mp3,.m4a,.mp4,.wav,.webm,.mov,.ogg">',
@@ -78,6 +79,8 @@ function openProofPicker(taskId){
  document.body.append(dialog);
  const list=dialog.querySelector('#proofPickerList'),addButton=dialog.querySelector('#proofPickerAdd'),input=dialog.querySelector('#proofPickerFiles'),replacer=dialog.querySelector('#proofPickerReplace'),saveButton=dialog.querySelector('#proofPickerSave');
  let replaceTarget=null,busy=false;
+ const errBox=dialog.querySelector('#proofPickerError');
+ const showError=msg=>{if(errBox){errBox.textContent='⚠️ '+msg;errBox.hidden=false}toast(msg,true)};
  const cleanup=()=>{for(const url of urls)URL.revokeObjectURL(url);urls.clear();document.removeEventListener('keydown',onKey);dialog.remove()};
  const onKey=e=>{if(e.key==='Escape'&&!busy)cleanup()};
  document.addEventListener('keydown',onKey);
@@ -157,6 +160,7 @@ function openProofPicker(taskId){
  saveButton.onclick=async()=>{
   if(busy)return;
   if(!pending.length&&!existing.some(e=>e.note!==e.originalNote)){toast('Yangi fayl yoki izoh mavjud emas.');return}
+  if(errBox)errBox.hidden=true;
   busy=true;saveButton.disabled=true;addButton.disabled=true;input.disabled=true;addButton.style.pointerEvents='none';saveButton.textContent='Saqlanmoqda…';
   let failed=0;
   try{
@@ -178,7 +182,7 @@ function openProofPicker(taskId){
      while(next<queue.length){
       const e=queue[next++];
       try{uploaded.set(e,await cloud.uploadFile(day,taskId,e.file))}
-      catch(err){failed++;toast(e.name+': '+err.message,true)}
+      catch(err){failed++;showError(e.name+': '+err.message)}
       finished++;saveButton.textContent='Yuklanmoqda '+finished+'/'+queue.length+'…';
      }
     };
@@ -193,7 +197,7 @@ function openProofPicker(taskId){
        const pos=pending.indexOf(e);if(pos!==-1)pending.splice(pos,1);
        if(e.replaces){await remove(taskId,e.replaces);const posOld=existing.findIndex(p=>p.id===e.replaces);if(posOld!==-1)existing.splice(posOld,1)}
       }else failed++;
-     }catch(err){failed++;toast(e.name+': '+err.message,true)}
+     }catch(err){failed++;showError(e.name+': '+err.message)}
     }
     save();render();
    }else{
@@ -205,8 +209,8 @@ function openProofPicker(taskId){
     }
    }
    if(!failed){cleanup();toast('✅ Proof saqlandi!');return}
-   toast(failed+' ta faylni saqlab bo‘lmadi.',true);
-  }catch(e){toast(e.message,true)}
+   if(!errBox||errBox.hidden)showError(failed+' ta faylni saqlab bo‘lmadi.');
+  }catch(e){showError(e.message)}
   finally{busy=false;saveButton.disabled=false;draw()}
  };
  draw();dialog.querySelector('#proofPickerAdd').focus();
