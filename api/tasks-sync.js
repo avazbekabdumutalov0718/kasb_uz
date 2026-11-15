@@ -1,9 +1,13 @@
 import {
   user,
+  userName,
+  shortName,
   response,
   validDay,
   validTask,
-  titles,
+  inPlan,
+  planFor,
+  isDone,
   entry,
   taskPath,
   save,
@@ -102,6 +106,9 @@ export async function POST(req) {
     return response({ error: 'Invalid JSON' }, 400);
   }
 
+  /* Reytingda ko'rinadigan ism (faqat tekshirilgan Telegram initData'dan) */
+  const nameHint = userName(req);
+
   /* Tanlangan kunning hamma proof'larini kanalga qayta yuborish */
   if (body.action === 'resend') {
     if (!validDay(body.day))
@@ -115,6 +122,9 @@ export async function POST(req) {
 
   if (!validDay(day) || !validTask(id))
     return response({ error: 'Invalid task' }, 400);
+
+  if (!inPlan(day, id))
+    return response({ error: 'Bu kunda bunday vazifa yo‘q' }, 400);
 
   if (
     day > new Intl.DateTimeFormat('en-CA', {
@@ -150,7 +160,7 @@ export async function POST(req) {
     }
 
     await save(taskPath(uid, day, id), current);
-    await publishScore(uid, day);
+    await publishScore(uid, day, nameHint);
 
     // Faqat holat o'zgarganda kanalga qayta yuboramiz
     if (doneChanged) await notify(uid, day);
@@ -179,7 +189,7 @@ export async function POST(req) {
       console.error('Storage delete warning:', error.message);
     }
 
-    await publishScore(uid, day);
+    await publishScore(uid, day, nameHint);
     await notify(uid, day);
 
     return response({ item: current });
@@ -232,7 +242,7 @@ export async function POST(req) {
       });
 
       await save(taskPath(uid, day, id), current);
-      await publishScore(uid, day);
+      await publishScore(uid, day, nameHint);
       // Bir nechta fayl ketma-ket yuklanganda hisobot faqat oxirgisida yuboriladi
       if (body.silent !== true) delivery = await notify(uid, day);
     }
@@ -288,9 +298,8 @@ async function whoIs(uid, cfg) {
 }
 
 function buildSummary(data, day, who, failed) {
-  const done = Object.values(data).filter(
-    x => x.done && x.proofs?.length
-  ).length;
+  const P = planFor(day);
+  const done = P.tasks.filter(t => isDone(data[t[0]])).length;
 
   const head = [];
 
@@ -300,12 +309,18 @@ function buildSummary(data, day, who, failed) {
   if (person.length) head.push('👤 ' + person.join(' · '));
 
   head.push('📅 ' + day);
-  head.push('📊 <b>' + dayNumber(day) + '-kun: ' + done + '/21 ball</b>');
+  head.push(
+    '📊 <b>' + dayNumber(day) + '-kun · ' + esc(P.label) + ': ' +
+    done + '/' + P.total + ' ball</b>'
+  );
+  if (P.title) head.push('🗂 ' + esc(P.title));
 
-  const blocks = Object.entries(titles).map(([id, t]) => {
-    const ok = data[id]?.done && data[id]?.proofs?.length;
-    return (ok ? '✅ ' : '⬜ ') + esc(t);
-  });
+  const blocks = P.groups.map(g =>
+    '<b>' + esc(g.icon + ' ' + g.label) + '</b>\n' +
+    g.tasks
+      .map(([id, t]) => (isDone(data[id]) ? '✅ ' : '⬜ ') + esc(t))
+      .join('\n')
+  );
 
   let text = head.join('\n') + '\n\n' + blocks.join('\n\n');
 
@@ -417,6 +432,12 @@ async function sendGroup(channelId, kind, items, caption, ids) {
 
 async function notify(uid, day) {
   try {
+    const P = planFor(day);
+
+    if (!P.total) {
+      return { delivered: false, reason: 'Bu kunda reja yo‘q' };
+    }
+
     const cfg = await read(cfgPath(uid)).catch(() => null);
 
     const channelId = process.env.WORDRUSH_CHANNEL_ID || cfg?.channelId;
@@ -447,7 +468,7 @@ async function notify(uid, day) {
     const failed = [];
 
     await Promise.all(
-      Object.keys(titles).flatMap(taskId =>
+      P.tasks.map(t => t[0]).flatMap(taskId =>
         (data[taskId]?.proofs || []).map(async proof => {
           try {
             const file = await bridge('signedRead', {
@@ -489,7 +510,7 @@ async function notify(uid, day) {
 
     const ids = [];
 
-    // 3) Avval umumiy hisobot (ism, kun, ball, 21 ta topshiriq)
+    // 3) Avval umumiy hisobot (ism, kun, ball, kunlik reja)
     const head = await tg('sendMessage', {
       chat_id: channelId,
       text: summary.slice(0, 4000),
@@ -500,7 +521,7 @@ async function notify(uid, day) {
     ids.push(head.message_id);
 
     // 4) Keyin har topshiriq o'z nomi va o'z fayllari bilan, tartib bilan
-    for (const [taskId, title] of Object.entries(titles)) {
+    for (const [taskId, title] of P.tasks) {
       const slot = perTask[taskId];
 
       if (!slot) continue;
@@ -544,18 +565,36 @@ async function notify(uid, day) {
   }
 }
 
-async function publishScore(uid, day) {
+/* Reyting yozuvi. `plan: 2` — yangi reja belgisi: eski (22 vazifali) yozuvlar reytingga qo'shilmaydi. */
+async function publishScore(uid, day, nameHint = '') {
   try {
+    const P = planFor(day);
     const data = await entriesForDay(uid, day);
+    const done = P.tasks.filter(t => isDone(data[t[0]])).length;
 
-    const done = Object.values(data).filter(
-      x => x.done && x.proofs?.length
-    ).length;
+    const path = 'wr-task-ranking-v1/' + day + '/' + uid + '.json';
+    const prev = await read(path).catch(() => null);
 
-    await save('wr-task-ranking-v1/' + day + '/' + uid + '.json', {
+    let name = shortName(nameHint) || prev?.name || '';
+
+    if (!name) {
+      try {
+        const cfg = await read(cfgPath(uid)).catch(() => null);
+        const who = await whoIs(uid, cfg);
+        name = shortName(who.name || who.username);
+      } catch {}
+    }
+
+    const now = new Date().toISOString();
+    const same = prev && prev.plan === 2 && prev.done === done;
+
+    await save(path, {
       uid,
+      name,
       done,
-      updatedAt: new Date().toISOString()
+      total: P.total,
+      plan: 2,
+      updatedAt: same && prev.updatedAt ? prev.updatedAt : now
     });
   } catch (e) {
     console.error('Ranking write failed:', e);

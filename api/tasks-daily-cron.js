@@ -1,5 +1,5 @@
 import { runHourly } from '../lib/hourly-reminders.js';
-import {bridge,tg,titles} from './_tasks-kit.js';
+import {bridge,tg,planFor,isDone} from './_tasks-kit.js';
 export const config={maxDuration:60};
 export async function GET(req){
  if(req.headers.get('x-wordrush-scheduler'))return runHourly(req);
@@ -9,6 +9,8 @@ export async function GET(req){
  const now=new Date(), day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tashkent',year:'numeric',month:'2-digit',day:'2-digit'}).format(now);
  const time=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tashkent',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(now);
  if(time<'20:55'||time>'21:30')return Response.json({skipped:'Only 21:00 Tashkent'});
+ const P=planFor(day);
+ if(!P.total)return Response.json({skipped:'No plan for this day'});
  try{
   const [{users},{rows}]=await Promise.all([bridge('weeklyUsers'),bridge('studyDaily',{day})]);
   const byUid=new Map(rows.map(x=>[x.uid,x])),results=[];
@@ -18,15 +20,15 @@ export async function GET(req){
     if((await bridge('read',{path})).data?.sentAt){results.push({uid,status:'already_sent'});continue}
     const {rows:tasks}=await bridge('weeklyData',{uid,start:day,end:day});
     const map=new Map(tasks.map(x=>[x.path.split('/').pop().replace('.json',''),x.data]));
-    const completed=Object.entries(titles).filter(([id])=>map.get(id)?.done && map.get(id)?.proofs?.length).map(([,title])=>title);
-    const unfinished=Object.entries(titles).filter(([id])=>!(map.get(id)?.done && map.get(id)?.proofs?.length)).map(([,title])=>title);
+    const completed=P.tasks.filter(([id])=>isDone(map.get(id))).map(([,title])=>title);
+    const unfinished=P.tasks.filter(([id])=>!isDone(map.get(id))).map(([,title])=>title);
     const study=byUid.get(uid),mins=Math.round((study?.seconds||0)/60),poms=study?.pomodoros||0;
     let displayName='Ishtirokchi '+uid.slice(-4);
     try{const chat=await tg('getChat',{chat_id:uid});const name=[chat.first_name,chat.last_name].filter(Boolean).join(' ').trim();displayName=(name||chat.username||displayName).slice(0,90)}catch(e){console.warn('Telegram user name unavailable:',e.message)}
     const message=[
-     '🌙 WORDRUSH · KUNLIK HISOBOT','👤 '+displayName,'📆 '+day,'',
-     '✅ Bajarildi: '+completed.length+'/21',
-     '❌ Bajarilmadi: '+unfinished.length+'/21',
+     '🌙 WORDRUSH · KUNLIK HISOBOT','👤 '+displayName,'📆 '+day+' · '+P.label+' · '+P.title,'',
+     '✅ Bajarildi: '+completed.length+'/'+P.total,
+     '❌ Bajarilmadi: '+unfinished.length+'/'+P.total,
      '📚 Study Time: '+Math.floor(mins/60)+' soat '+mins%60+' daqiqa',
      '🍅 Pomodoro: '+poms+' ta','',
      '✅ BAJARILGAN:',...(completed.length?completed.map(x=>'• '+x):['Hali yo‘q']),'',
