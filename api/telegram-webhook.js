@@ -1,6 +1,7 @@
 import {passages,vocabulary,trialDay} from '../reading-lab-data.js';
 import {tg,sign,save,read,cfgPath,response} from './_tasks-kit.js';
-import {SITE,PAGES,READING,TASKS,SAYT,APP,LOGIN,CHANNEL,MENU} from '../bot-config.js';
+import {SITE,PAGES,READING,TASKS,PUNISH,SAYT,APP,LOGIN,CHANNEL,MENU} from '../bot-config.js';
+import {statusLines} from '../lib/punishment.js';
 const site=SITE;
 
 // Matndagi {n}, {title} kabi joylarni qiymat bilan almashtiradi
@@ -36,6 +37,10 @@ try{
   await tg('sendMessage',{chat_id:chat,text:fill(READING.text,v),reply_markup:keyboard(READING.buttons,v)});
  }else if(cmd==='/tasks'){
   await tg('sendMessage',{chat_id:chat,text:TASKS.text,reply_markup:keyboard(TASKS.buttons)});
+ }else if(cmd==='/jazo'||cmd==='/punishment'){
+  const st=await statusLines(String(chat));
+  const text=st.open?fill(PUNISH.text,{list:st.text}):PUNISH.none;
+  await tg('sendMessage',{chat_id:chat,text:text.slice(0,4000),disable_web_page_preview:true,reply_markup:keyboard(PUNISH.buttons)});
  }else if(cmd==='/app'){
   const ticket=sign(chat,'session',APP.ttlSeconds);
   const link=pageUrl('login',{ticket:encodeURIComponent(ticket)});
