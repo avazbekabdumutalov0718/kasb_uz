@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/tasks-weekly-cron",
+      "path": "/api/tasks-daily-cron?job=weekly",
       "schedule": "0 18 * * 0"
     },
     {
