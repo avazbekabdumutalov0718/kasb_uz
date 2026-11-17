@@ -1,7 +1,9 @@
 import { runHourly } from '../lib/hourly-reminders.js';
+import { runWeekly } from '../lib/weekly-report.js';
 import {bridge,tg,planFor,isDone} from './_tasks-kit.js';
 export const config={maxDuration:60};
 export async function GET(req){
+ if(new URL(req.url).searchParams.get('job')==='weekly')return runWeekly(req);
  if(req.headers.get('x-wordrush-scheduler'))return runHourly(req);
  if(req.headers.get('authorization')!=='Bearer '+process.env.CRON_SECRET)return Response.json({error:'Forbidden'},{status:403});
  const channelId=process.env.WORDRUSH_CHANNEL_ID;
