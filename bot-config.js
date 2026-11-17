@@ -20,6 +20,7 @@ export const PAGES = {
   tasks: 'tasks.html?miniapp=1',
   reading: 'reading-lab.html?article={n}&miniapp=1', // {n} = article raqami
   login: 'tasks.html?session={ticket}',
+  punishment: 'tasks.html?miniapp=1&tab=punishment',
 };
 
 // ---------- 2. /start, /reading, /article ----------
@@ -49,6 +50,24 @@ export const TASKS = {
   buttons: [
     { text: '📋 Vazifalar', type: 'webapp', page: 'tasks' },
     { text: '🌐 Sayt', type: 'url', url: SITE },
+  ],
+};
+
+// ---------- 3b. /jazo (Punishment bo'limi) ----------
+// {list} = foydalanuvchining ochiq jazolari (bot o'zi to'ldiradi)
+export const PUNISH = {
+  text:
+    '⚖️ WORDRUSH · JAZO BO‘LIMI\n\n' +
+    '{list}\n\n' +
+    'Majburiy bo‘limlar (Reading, Writing, Speaking, Listening) to‘liq bajarilmasa 2 ta jazo vazifasi avtomatik tanlanadi.\n' +
+    'Extra bo‘limi majburiy emas.',
+  none:
+    '⚖️ WORDRUSH · JAZO BO‘LIMI\n\n' +
+    '✅ Hozircha jazo yo‘q. Zo‘r — shunday davom eting!\n\n' +
+    'Majburiy bo‘limlar to‘liq bajarilsa jazo berilmaydi. Extra bo‘limi majburiy emas.',
+  buttons: [
+    { text: '⚖️ Jazo bo‘limini ochish', type: 'webapp', page: 'punishment' },
+    { text: '☑ TASKS ga kirish', type: 'webapp', page: 'tasks' },
   ],
 };
 
@@ -87,6 +106,7 @@ export const MENU = {
     { command: 'start', description: 'WORDRUSH Mini App va random reading' },
     { command: 'reading', description: 'Bugungi random article va audio' },
     { command: 'tasks', description: 'Homework Tracker' },
+    { command: 'jazo', description: 'Jazo vazifalari va muddatlar' },
     { command: 'app', description: 'Android TASKS kirish havolasi' },
   ],
 };

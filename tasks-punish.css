@@ -1,0 +1,91 @@
+/* WORDRUSH · JAZO bo'limi stillari (Mini App tabi + oddiy sayt paneli) */
+.pj{--pj-bg:#0a0a12;--pj-card:#13131f;--pj-card2:#1a1a2a;--pj-line:rgba(255,255,255,.09);--pj-txt:#f3f3ff;--pj-mut:#9a9ab8;
+ --pj-ok:#2ee6a6;--pj-warn:#ffb84d;--pj-bad:#ff5c7a;--pj-a1:#7c5cff;--pj-a2:#ff5c9d;
+ color:var(--pj-txt);font-family:inherit;line-height:1.45;margin:0 0 14px}
+.pj *{box-sizing:border-box}
+.pj.pj-site{max-width:980px;margin:28px auto;padding:18px;border-radius:26px;background:var(--pj-bg);border:1px solid var(--pj-line);box-shadow:0 14px 40px rgba(0,0,0,.25)}
+.pj.pj-mini{padding:0 0 92px}   /* pastdagi tab paneli ostida qolmasin */
+.pj[hidden]{display:none!important}
+
+/* Hero */
+.pj-hero{padding:18px;border-radius:24px;margin:0 0 12px;background:linear-gradient(145deg,rgba(124,92,255,.22),rgba(255,92,157,.14));border:1px solid var(--pj-line)}
+.pj-eyebrow{display:inline-block;font-size:11px;font-weight:900;letter-spacing:2px;color:var(--pj-a2)}
+.pj-hero h2{margin:4px 0 6px;font-size:24px;font-weight:900;letter-spacing:-.5px;color:var(--pj-txt)}
+.pj-hero p{margin:0;font-size:13px;color:var(--pj-mut)}
+.pj-hero p b{color:var(--pj-txt)}
+.pj-rules{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.pj-rules div{padding:10px 6px;border-radius:16px;background:rgba(255,255,255,.06);text-align:center}
+.pj-rules b{display:block;font-size:20px;font-weight:900;color:var(--pj-txt)}
+.pj-rules span{display:block;font-size:10.5px;color:var(--pj-mut);font-weight:700;margin-top:2px}
+.pj-open{margin:0 0 12px;padding:11px 14px;border-radius:16px;background:rgba(255,184,77,.12);border:1px solid rgba(255,184,77,.35);color:var(--pj-warn);font-size:13px;font-weight:700}
+
+/* Jazo kartasi */
+.pj-card{position:relative;margin:0 0 14px;padding:16px 14px 6px;border-radius:24px;background:var(--pj-card);border:1px solid var(--pj-line);overflow:hidden}
+.pj-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--pj-warn);box-shadow:0 0 16px var(--pj-warn)}
+.pj-card.done::before{background:var(--pj-ok);box-shadow:0 0 16px var(--pj-ok)}
+.pj-card.bad::before{background:var(--pj-bad);box-shadow:0 0 16px var(--pj-bad)}
+.pj-card header{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;margin:0 0 6px}
+.pj-day{font-size:12px;font-weight:800;color:var(--pj-mut)}
+.pj-card h3{margin:2px 0 0;font-size:18px;font-weight:900;letter-spacing:-.3px;color:var(--pj-txt)}
+.pj-badge{flex:none;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:850;white-space:nowrap}
+.pj-badge.ok{background:rgba(46,230,166,.15);color:var(--pj-ok)}
+.pj-badge.warn{background:rgba(255,184,77,.15);color:var(--pj-warn)}
+.pj-badge.bad{background:rgba(255,92,122,.15);color:var(--pj-bad)}
+.pj-why,.pj-meta{margin:0 0 6px;font-size:12.5px;color:var(--pj-mut)}
+.pj-meta b{color:var(--pj-txt)}
+
+/* Vazifa */
+.pj-task{margin:10px 0;padding:12px;border-radius:18px;background:var(--pj-card2);border:1px solid var(--pj-line)}
+.pj-task.done{border-color:rgba(46,230,166,.4)}
+.pj-task-head{display:flex;gap:10px;align-items:flex-start}
+.pj-ico{display:grid;place-items:center;width:38px;height:38px;flex:none;border-radius:13px;background:rgba(124,92,255,.18);font-size:19px}
+.pj-task-text{flex:1;min-width:0}
+.pj-task-text b{display:block;font-size:14.5px;font-weight:850;color:var(--pj-txt)}
+.pj-task-text p{margin:3px 0 0;font-size:12.5px;color:var(--pj-mut)}
+.pj-st{flex:none;font-size:10px;font-weight:900;letter-spacing:.4px;padding:5px 8px;border-radius:999px;background:rgba(255,184,77,.14);color:var(--pj-warn)}
+.pj-st.ok{background:rgba(46,230,166,.15);color:var(--pj-ok)}
+.pj-req{margin:10px 0 0;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);font-size:12.5px}
+.pj-req b{color:var(--pj-txt)}
+.pj-req ul{margin:6px 0 0;padding-left:18px;color:var(--pj-mut)}
+.pj-proofs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.pj-none{font-size:12px;color:var(--pj-mut)}
+.pj-chip{display:inline-flex;align-items:center;gap:2px;max-width:100%;padding:4px 4px 4px 10px;border-radius:999px;background:rgba(255,255,255,.07);font-size:12px}
+.pj-chip>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}
+.pj-chip small{color:var(--pj-mut)}
+.pj-chip button{width:26px;height:26px;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:var(--pj-txt);font-size:14px;cursor:pointer}
+.pj-chip button[data-pj-del]{color:var(--pj-bad)}
+.pj-up{display:inline-flex;align-items:center;gap:6px;margin:10px 0 2px;padding:10px 16px;border-radius:14px;background:linear-gradient(135deg,var(--pj-a1),var(--pj-a2));color:#fff;font-size:13px;font-weight:850;cursor:pointer;position:relative;overflow:hidden}
+.pj-up input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.pj-msg{margin-top:8px;font-size:12px;font-weight:700;color:var(--pj-ok)}
+.pj-msg.bad{color:var(--pj-bad)}
+
+/* Bo'sh holat / xato / skelet */
+.pj-empty{padding:26px 16px;border-radius:22px;background:var(--pj-card);border:1px dashed var(--pj-line);text-align:center;margin:0 0 12px}
+.pj-empty span{font-size:34px;display:block}
+.pj-empty strong{display:block;margin-top:6px;font-size:16px}
+.pj-empty p{margin:6px 0 0;font-size:13px;color:var(--pj-mut)}
+.pj-empty button{margin-top:12px;padding:9px 16px;border:0;border-radius:12px;background:var(--pj-a1);color:#fff;font-weight:800;cursor:pointer}
+.pj-skel{height:110px;margin:0 0 12px;border-radius:22px;background:linear-gradient(90deg,var(--pj-card),var(--pj-card2),var(--pj-card));background-size:200% 100%;animation:pjskel 1.3s infinite}
+@keyframes pjskel{to{background-position:-200% 0}}
+
+/* 10 ta vazifa ro'yxati */
+.pj-cat{margin:6px 0 0;border-radius:20px;background:var(--pj-card);border:1px solid var(--pj-line);overflow:hidden}
+.pj-cat summary{padding:14px 16px;font-size:14px;font-weight:850;cursor:pointer;list-style:none;color:var(--pj-txt)}
+.pj-cat summary::-webkit-details-marker{display:none}
+.pj-cat-body{padding:0 16px 16px}
+.pj-cat-body h4{margin:0 0 4px;font-size:13px;letter-spacing:1.2px;color:var(--pj-a2)}
+.pj-cat-body p{margin:0 0 10px;font-size:12.5px;color:var(--pj-mut)}
+.pj-cat-body ol{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.pj-cat-body li{padding:10px 12px;border-radius:14px;background:var(--pj-card2);border:1px solid transparent}
+.pj-cat-body li.on{border-color:rgba(255,184,77,.55);background:rgba(255,184,77,.08)}
+.pj-cat-body li b{display:block;font-size:13.5px;color:var(--pj-txt)}
+.pj-cat-body li span{display:block;font-size:12.5px;color:var(--pj-mut);margin-top:2px}
+.pj-cat-body li small{display:block;font-size:11.5px;color:var(--pj-mut);margin-top:4px}
+.pj-cat-body .pj-note{margin:12px 0 0;font-weight:800;color:var(--pj-warn)}
+
+/* Mini App tab paneli: 4 ta tab */
+body.mini-mode .mini-section-tabs{grid-template-columns:repeat(4,1fr)!important;max-width:460px!important}
+body.mini-mode .mini-section-tabs button{position:relative}
+.pj-dot{position:absolute;top:3px;left:calc(50% + 6px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#ff5c7a;color:#fff;font-size:10px;font-weight:900;line-height:17px;text-align:center;box-shadow:0 2px 8px rgba(255,92,122,.5)}
+
+@media (max-width:420px){.pj-rules{gap:6px}.pj-hero h2{font-size:21px}.pj-chip>span{max-width:140px}}
